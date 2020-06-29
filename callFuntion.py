@@ -13,8 +13,8 @@ if whatbroker == "binance":
     result = 'balances'
     listAsset = 'asset'
     exchange = ccxt.binance({
-        'apiKey': '**********************',
-        'secret': '***********************',
+        'apiKey': '********************',
+        'secret': '********************',
         'enableRateLimit': True,
     })
 
@@ -23,9 +23,9 @@ if whatbroker == "kucoin":
     listAsset = 'currency'
     typeaccount = 'type'
     exchange = ccxt.kucoin({
-        'apiKey': '******************',
-        'secret': '******************',
-        'password': '**************',
+        'apiKey': '********************',
+        'secret': '********************',
+        'password': '********************',
         'enableRateLimit': True,
     })
 
@@ -34,8 +34,8 @@ if whatbroker == "ftx":
     listAsset = 'coin'
     subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
     exchange = ccxt.ftx({
-        'apiKey': '****************************',
-        'secret': '****************************',
+        'apiKey': '********************',
+        'secret': '********************',
         'enableRateLimit': True,
     })
     if subaccount == "":
@@ -73,13 +73,12 @@ def updatee(df,AroundIndex):
     df._set_value(AroundIndex, 'Dif', difValue3)
     dif = abs(df.loc[a]['Dif'])
 
-    #ฟังก์ชั่นอะไรที่ต้องการใช้งาน
-    # 1 คือ เช็ค ทุกๆ x%
-    # 2 คือ เช็ค ทุกๆ xนาที
-    conditionToAdjust = whatFunction(df,a,dif,'percent',10)
+    #ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
+    conditionToAdjust2 = df.loc[a]['Condition']
+    conditionToAdjust = whatFunction(df,a,dif,'percent',conditionToAdjust2)
 
-    if conditionToAdjust < dif :
-        Stat  = 'Action'                #บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
+    if conditionToAdjust < dif :     #บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
+        Stat  = 'Action'
         df.loc[AroundIndex, 'Stat '] = Stat
         _Amount1 = abs(difValue3)
         _Amount2 = _Amount1 / Nav2
@@ -100,8 +99,8 @@ def updatee(df,AroundIndex):
             #re(whatsymbol, 'sell', amount, price)  #ยิงออเดอร์
             #if oder == macth: #ถ้าเปิดออเดอร์สำเร็จแล้ว
                 #df = newrow_index(df, AroundIndex)  # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
-    else:
-        Stat = 'Wait'      #ยังไม่เข้าเงื่อนไข รอไปก่อน
+    else:  #ยังไม่เข้าเงื่อนไข รอไปก่อน
+        Stat = 'Wait'
         df.loc[AroundIndex, 'Stat'] = Stat
     return df
 
@@ -164,7 +163,7 @@ def re(symbol,side,amount,price):
         'recvWindow': 10000
     }
     order = exchange.create_order(symbol, type, side, amount, price, params)
-    #print(order)
+    return order
 
 def whatFunction(df,a,diff,whatfution,parameter):
     if whatfution == 'percent':
@@ -174,6 +173,6 @@ def whatFunction(df,a,diff,whatfution,parameter):
         conditionToAdjust3 = (conditionToAdjust1 / 100) * conditionToAdjust2
         return  conditionToAdjust3
 
-    if whatfution ==2:
+    #if whatfution ==2:
 
 

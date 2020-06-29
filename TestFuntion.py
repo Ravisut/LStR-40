@@ -12,7 +12,7 @@ ws = gc.open("Data").worksheet("test3") #เรียกชีทหน้า te
 
 df = get_as_dataframe(ws)
 
-test = 2
+test = 3
 # พื้นที่ทดสอบฟังก์ชั่น ก่อนเอาไปใส่ใน คลาส reBalance
 if test == 1: # เรียกดูว่า เหรียญนั้นๆ มีจำนวนเท่าไร
     df = callFuntion.get_balance('BNB', 1)
@@ -22,11 +22,13 @@ if test == 2: # เรียกดูว่าในพอร์ตมีเห�
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     set_with_dataframe(gc.open("Data").worksheet("test3"), df.reset_index())  #บันทึกลง ชีทหน้า test3
     print(df)
-if test == 3: # ดูโครงสร้าง json เพื่อปรับคำสั่ง
-    df = callFuntion.get_balance('', 3)
-    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-    set_with_dataframe(gc.open("Data").worksheet("test3"), df.reset_index() )  #บันทึกลง ชีทหน้า test3
-    print(df)
+
+if test == 3: # ทดสอบยิงออเดอร์
+    infooder = callFuntion.re('BNB/USDT', 'sell', 0.001, 18.00)
+    #df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+    #set_with_dataframe(gc.open("Data").worksheet("test3"), df.reset_index() )  #บันทึกลง ชีทหน้า test3
+    print(type(infooder))
+    print(infooder)
 
 
 

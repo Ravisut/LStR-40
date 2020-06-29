@@ -1,5 +1,6 @@
 import pandas as pd
 import gspread
+import time
 import callFuntion
 import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
@@ -16,14 +17,24 @@ df = get_as_dataframe(ws).set_index('indexAround')
 #ตัวนับ
 Around = df.loc['Around']['Balance']
 
-#Update รอใส่ while Loop
-df = callFuntion.updatee(df,Around)
-df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+#Update while Loop
+while True:
+    #try:
+        timeBegin = time.time()
 
-#บันทึกลง ชีทหน้า test2
-set_with_dataframe(gc.open("Data").worksheet("test2"), df.reset_index() )
-print(df)
+        df = callFuntion.updatee(df, Around)
 
-#รอใส่ฟังก์ชั่น แจ้งเตือนผ่านไลน์
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')] # ลบคอลัม์ที่ไม่ต้องการ
+        print(df.loc[Around].to_frame().T)
+        # บันทึกลง ชีทหน้า test2
+        set_with_dataframe(gc.open("Data").worksheet("test2"), df.reset_index())
 
+
+        timeEnd = time.time()
+        timeElapsed = timeEnd - timeBegin
+        time.sleep(60 - timeElapsed) #ถ่วงเวลา 1 นาที
+        print(timeBegin,timeEnd)
+        # รอใส่ฟังก์ชั่น แจ้งเตือนผ่านไลน์
+    #except Exception as e:
+    #    print("Connection lost from broker")
 #End while Loop
