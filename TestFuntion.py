@@ -12,7 +12,7 @@ ws = gc.open("Data").worksheet("test3") #เรียกชีทหน้า te
 
 df = get_as_dataframe(ws)
 
-test = 3
+test = 0
 # พื้นที่ทดสอบฟังก์ชั่น ก่อนเอาไปใส่ใน คลาส reBalance
 if test == 1: # เรียกดูว่า เหรียญนั้นๆ มีจำนวนเท่าไร
     df = callFuntion.get_balance('BNB', 1)

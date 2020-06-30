@@ -11,15 +11,15 @@ creds = ServiceAccountCredentials.from_json_keyfile_name("API.json", scope)
 gc = gspread.authorize(creds)
 ws = gc.open("Data").worksheet("test2") #เรียกชีทหน้า test2
 
-#เรียกข้อมูลใน google sheet และตั้งให้ คอลัม indexAround เป็น index ไว้ให้ pandas เรียกใช้
-df = get_as_dataframe(ws).set_index('indexAround')
-
-#ตัวนับ
-Around = df.loc['Around']['Balance']
+#df = get_as_dataframe(ws).set_index('indexAround')
+#Around = df.loc['Around']['Balance'] # ตัวนับ
 
 #Update while Loop
 while True:
-    #try:
+    try:
+        df = get_as_dataframe(ws).set_index('indexAround') #เรียกข้อมูลใน google sheet และตั้งให้ คอลัม indexAround เป็น index ไว้ให้ pandas เรียกใช้
+        Around = df.loc['Around']['Balance'] # ตัวนับ
+
         timeBegin = time.time()
 
         df = callFuntion.updatee(df, Around)
@@ -33,8 +33,8 @@ while True:
         timeEnd = time.time()
         timeElapsed = timeEnd - timeBegin
         time.sleep(60 - timeElapsed) #ถ่วงเวลา 1 นาที
-        print(timeBegin,timeEnd)
+        #print(timeBegin,timeEnd)
         # รอใส่ฟังก์ชั่น แจ้งเตือนผ่านไลน์
-    #except Exception as e:
-    #    print("Connection lost from broker")
+    except Exception as e:
+        print("แจ้งคนเขียน")
 #End while Loop

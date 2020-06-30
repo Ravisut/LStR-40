@@ -13,8 +13,8 @@ if whatbroker == "binance":
     result = 'balances'
     listAsset = 'asset'
     exchange = ccxt.binance({
-        'apiKey': '********************',
-        'secret': '********************',
+        'apiKey': '**********************',
+        'secret': '************************',
         'enableRateLimit': True,
     })
 
@@ -23,9 +23,9 @@ if whatbroker == "kucoin":
     listAsset = 'currency'
     typeaccount = 'type'
     exchange = ccxt.kucoin({
-        'apiKey': '********************',
-        'secret': '********************',
-        'password': '********************',
+        'apiKey': '****************',
+        'secret': '****************',
+        'password': '************',
         'enableRateLimit': True,
     })
 
@@ -34,8 +34,8 @@ if whatbroker == "ftx":
     listAsset = 'coin'
     subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
     exchange = ccxt.ftx({
-        'apiKey': '********************',
-        'secret': '********************',
+        'apiKey': '**********************',
+        'secret': '************************t',
         'enableRateLimit': True,
     })
     if subaccount == "":
@@ -74,12 +74,12 @@ def updatee(df,AroundIndex):
     dif = abs(df.loc[a]['Dif'])
 
     #ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
-    conditionToAdjust2 = df.loc[a]['Condition']
-    conditionToAdjust = whatFunction(df,a,dif,'percent',conditionToAdjust2)
 
-    if conditionToAdjust < dif :     #บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
+    conditionToAdjust = whatFunction(df,a,'percent')
+
+    if conditionToAdjust < dif :     #ถ้าส่วนต่าง (dif) มากกว่า เงื่อนไข%(conditionToAdjust) ที่ตั้งไว้ บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
         Stat  = 'Action'
-        df.loc[AroundIndex, 'Stat '] = Stat
+        df.loc[AroundIndex, 'Stat'] = Stat
         _Amount1 = abs(difValue3)
         _Amount2 = _Amount1 / Nav2
         df._set_value(AroundIndex, 'Amount', _Amount2)
@@ -88,20 +88,22 @@ def updatee(df,AroundIndex):
 
         # ส่วนต่าง ถ้าขาด ให้เติมโดย ซื้อเข้า
         if difValue3 < 0:
-            df._set_value(AroundIndex, 'Side', "BUY")
-            # re(whatsymbol, 'buy', amount, price)  #ยิงออเดอร์ หาบัญชีเดโมเอามาทดสอบยัง ยังไม่ได้
-            # if oder == macth: #ถ้าเปิดออเดอร์สำเร็จแล้ว
-                #df = newrow_index(df, AroundIndex)  # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
+            df._set_value(a, 'Side', "BUY")
+            orderrr = re(whatsymbol, 'buy', amount, price)  #ยิงออเดอร์
+            orderFilled(df,AroundIndex,orderrr) #ส่งข้อมูล ไอดีออเดอร์และวันที่
+            df = newrow_index(df, AroundIndex)  # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
+            #if orderFilled != '': #ถ้าเปิดออเดอร์สำเร็จแล้ว สำเร็จ ลิมิต
 
         # ส่วนต่าง ถ้าเกิน ให้ ขายออก
         if difValue3 > 0:
-            df._set_value(AroundIndex, 'Side', "SELL")
-            #re(whatsymbol, 'sell', amount, price)  #ยิงออเดอร์
-            #if oder == macth: #ถ้าเปิดออเดอร์สำเร็จแล้ว
-                #df = newrow_index(df, AroundIndex)  # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
+            df._set_value(a, 'Side', "SELL")  # ทำไม ใส่ AroundIndex แล้ว error ValueError: could not convert string to float หว่าาา
+            orderrr = re(whatsymbol, 'sell', amount, price)  #ยิงออเดอร์
+            orderFilled(df,AroundIndex,orderrr)  # ส่งข้อมูล ไอดีออเดอร์และวันที่
+            df = newrow_index(df, AroundIndex)  # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
+
     else:  #ยังไม่เข้าเงื่อนไข รอไปก่อน
-        Stat = 'Wait'
-        df.loc[AroundIndex, 'Stat'] = Stat
+        df._set_value(a, 'Stat', 'Wait') # 'Stat ' กับ 'Stat' ถ้ามีช่องว่าง คือไม่ใช่คำเดียวกัน
+        #df.loc[AroundIndex, 'Stat'] = 'Wait' # แบบนี้จะสร้าง colum ใหม่
     return df
 
 def newrow_index(df,AroundIndex):
@@ -152,27 +154,42 @@ def getPrice(pair):
 
 def re(symbol,side,amount,price):
     #symbol = 'XRP/BNB'
-    type = 'limit'  # or 'market'
+    type = 'market'  # 'limit' or 'market'
     #side = 'sell'  # or 'buy'
     #amount = 11.0
     #price = 0.0120  # or None #
 
     # extra params and overrides if needed
     params = {
-        'test': True,  # ทดสอบโดยไม่ต้องเปิดออเดอร์จริงๆ
+        'test': True,  # ทดสอบโดยไม่ต้องเปิดออเดอร์จริงๆ สำหรับ Binance
         'recvWindow': 10000
     }
-    order = exchange.create_order(symbol, type, side, amount, price, params)
+    #order = exchange.create_order(symbol, type, side, amount, price, params) #Limit
+    order = exchange.create_order(symbol, type, side, amount, params)  # Market
     return order
 
-def whatFunction(df,a,diff,whatfution,parameter):
+def whatFunction(df,Around,whatfution):
     if whatfution == 'percent':
-        # check if change 2% or not
-        conditionToAdjust1 = df.loc[a]['Value']
-        conditionToAdjust2 = parameter
-        conditionToAdjust3 = (conditionToAdjust1 / 100) * conditionToAdjust2
+        conditionToAdjust1 = df.loc[Around]['Value']
+        conditionToAdjust2 = df.loc[Around]['Condition'] # ดึงเลข 2 ในชีทมา
+        conditionToAdjust3 = (conditionToAdjust1 / 100) * conditionToAdjust2 # ตรวจดูว่า เกิน 2%ยัง
         return  conditionToAdjust3
 
     #if whatfution ==2:
 
+def orderFilled(df,Around,orderrr):
+
+    df._set_value(Around, 'IDorder', orderrr['id'])
+    df._set_value(Around, 'Date',  orderrr['datetime'])
+    df._set_value(Around, 'AssetAdjust', get_balance(SubAsset,1))
+
+    Nav1 = df.loc[Around]['AssetAdjust']
+    Nav2 = df.loc[Around]['Price']
+    Nav3 = float(Nav1) * float(Nav2)
+    df._set_value(Around, 'ValueAdjust', Nav3)
+
+    df._set_value(Around, 'BalanceAdjust', get_balance(MainAsset,1))
+
+    #df._set_value(Around, 'Filled', orderrr['filled'])
+    #return df.loc[Around]['filled']
 
