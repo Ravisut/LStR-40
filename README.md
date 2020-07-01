@@ -1,3 +1,9 @@
+# บริจาคให้เทรดเดอร์ยากไร้ ได้ที่
+
+XRP Address : rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh
+
+XRP Tag     : 105375430
+
 # บอทเทรดรีบาลานซ์
 ตัวใช้งานคือ ไฟล์ reBalance.py และ callFuntion.py
 
