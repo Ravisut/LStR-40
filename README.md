@@ -6,6 +6,8 @@ XRP Tag     : 105375430
 
 หรือ กรุงไทย 901-0-92866-7 รวิสุต คณิต
 
+![alt text](https://media.discordapp.net/attachments/721823822117994536/727811352005181510/1.png)
+
 # บอทเทรดรีบาลานซ์
 ตัวใช้งานคือ ไฟล์ reBalance.py และ callFuntion.py
 
