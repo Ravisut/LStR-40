@@ -4,11 +4,7 @@ XRP Address : rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh
 
 XRP Tag     : 105375430
 
-หรือ
-
-BNB Address : bnb136ns6lfw4zs5hg4n85vdthaad7hq5m4gtkgf23
-
-BNB MEMO    : 102649743
+หรือ กรุงไทย 901-0-92866-7 รวิสุต คณิต
 
 # บอทเทรดรีบาลานซ์
 ตัวใช้งานคือ ไฟล์ reBalance.py และ callFuntion.py
