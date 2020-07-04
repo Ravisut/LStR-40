@@ -35,6 +35,6 @@ while True:
          time.sleep(60 - timeElapsed)  # ถ่วงเวลา 1 นาที
 
      except Exception as e:
-            callFuntion.LineNotify('','','','error') # ถ้า error ไลน์ไป แจ้งคนเขียน
+            callFuntion.LineNotify('','',e,'error') # ถ้า error ไลน์ไป แจ้งคนเขียน
             break
 #End while Loop
