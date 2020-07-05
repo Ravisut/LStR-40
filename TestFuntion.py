@@ -31,10 +31,10 @@ if test == 3: # ทดสอบยิงออเดอร์
     print(type(infooder))
     print(infooder)
 
-if test == 4:
+if test == 4: #ทดสอบดูข้อมูลด้วยไอดี
     oderinfo = callFuntion.checkByIDoder('5efe39302f778b0007f4d2b1')
     print(oderinfo)
-if test == 5:
+if test == 5: #ทดสอบเวลา
     start_time  = time.time()+60
     target_time = time.time()
     timeElapsed = target_time - start_time

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 def whatFunction(df,Around,whatfution):
     if whatfution == 'percent':
-        conditionToAdjust1 = df.loc[Around]['Value']
+        conditionToAdjust1 = df.loc[Around]['PriceRe']
         conditionToAdjust2 = df.loc[Around]['Condition'] # ดึงเลข 2 ในชีทมา
 
         # Add dynamic % follow up ATR voltility
