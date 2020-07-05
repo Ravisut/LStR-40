@@ -15,8 +15,8 @@ if whatbroker == "binance":
     result = 'balances'
     listAsset = 'asset'
     exchange = ccxt.binance({
-        'apiKey': '****************',
-        'secret': '****************',
+        'apiKey': '---------------',
+        'secret': '----------------',
         'enableRateLimit': True,
     })
 
@@ -25,9 +25,9 @@ if whatbroker == "kucoin":
     listAsset = 'currency'
     typeaccount = 'type'
     exchange = ccxt.kucoin({
-        'apiKey': '**************',
-        'secret': '***************',
-        'password': '***********',
+        'apiKey': '----------------',
+        'secret': '----------------',
+        'password': '-----------',
         'enableRateLimit': True,
     })
 
@@ -36,8 +36,8 @@ if whatbroker == "ftx":
     listAsset = 'coin'
     subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
     exchange = ccxt.ftx({
-        'apiKey': '*********',
-        'secret': '**********',
+        'apiKey': '--------------------',
+        'secret': '---------------------',
         'enableRateLimit': True,
     })
     if subaccount == "":
@@ -82,7 +82,7 @@ def updatee(df,AroundIndex,SubAsset):
 
 
     if df.loc[AroundIndex, 'IDorder'] != 'x0':  # ช่องไอดี ว่างไหม ถ้าไม่ว่างแสดงว่า ตั้ง pending อยู่
-        print(df.loc[AroundIndex, 'IDorder'])
+        #print(df.loc[AroundIndex, 'IDorder'])
         df = orderFilled(df, AroundIndex, '', SubAsset, 2)  # เช็ค ว่าลิมิตออเดอร์ ว่า fill ยัง
     else:
         # ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
@@ -189,6 +189,7 @@ def orderFilled(df,Around,orderrr,SubAsset,typee):
             Nav2 = df.loc[Around]['Price']
             Nav3 = float(Nav1) * float(Nav2)
             df._set_value(Around, 'ValueAdjust', Nav3)
+            df._set_value(Around, 'Filled', orderMatched['filled'])
 
             df._set_value(Around, 'BalanceAdjust', get_balance(MainAsset, 1))
 
@@ -197,11 +198,11 @@ def orderFilled(df,Around,orderrr,SubAsset,typee):
         else:
             # ผ่านไป 3 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
             first_time = df.loc[Around]['Timer']
-            start_time = first_time + 180
+            start_time = first_time + 600 #นับถอยหลัง 10 นาที เพื่อยกเลิกออเดอร์
             target_time = time.time()
             timeElapsed = target_time - start_time
             if timeElapsed > 0 :
-                cancelOrder(id)
+                cancelOrder(df,Around,id)
 
     if typee == 1: # บันทึก ไอดีออเดอร์ และวันที่ ตั้งลิมิต
         df._set_value(Around, 'IDorder', orderrr['id'])
@@ -214,17 +215,23 @@ def checkByIDoder(id):
     oderinfo = exchange.fetch_order(id)
     return oderinfo
 
-def cancelOrder(id):
+def cancelOrder(df,Around,id):
     exchange.cancel_order(id)
+    # ถ้า cancel แล้วต้องเคลียร์ค่าเก่าออกให้หมด ไม่นั้นจะ error ccxt.base.errors.InvalidOrder: order_not_exist_or_not_allow_to_cancel
+    df._set_value(Around, 'IDorder', 'x0')
+    df._set_value(Around, 'Amount', '')
+    df._set_value(Around, 'Date', '')
+    df._set_value(Around, 'Timer', '')
 
-def newrow_index(df,AroundIndex):
-    AroundIndex = AroundIndex+1
+
+def newrow_index(df,Around):
+    Around = Around+1
     # Adding the row
-    df1 = df[~df.index.isna()].append(pd.DataFrame([[np.nan] * len(df.columns)], columns=df.columns, index=[AroundIndex]))
+    df1 = df[~df.index.isna()].append(pd.DataFrame([[np.nan] * len(df.columns)], columns=df.columns, index=[Around]))
     df = df1.append(df[df.index.isna()])
     df = df.rename_axis("indexAround")
-    df._set_value(AroundIndex,'IDorder','x0')
-    df._set_value('Around', 'Balance', AroundIndex)
+    df._set_value(Around,'IDorder','x0')
+    df._set_value('Around', 'Balance', Around)
     return df
 
 def LineNotify(df,Around,subasset,typee) :
