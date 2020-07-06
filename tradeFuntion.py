@@ -8,5 +8,5 @@ def whatFunction(df,Around,whatfution):
 
         # Add dynamic % follow up ATR voltility
         atr30hours = conditionToAdjust2
-        conditionToAdjust3 = (conditionToAdjust1 / 100) * conditionToAdjust2 # ตรวจดูว่า เกิน 2%ยัง
+        conditionToAdjust3 = (float(conditionToAdjust1) / 100) * float(conditionToAdjust2) # ตรวจดูว่า เกิน 2%ยัง
         return  conditionToAdjust3

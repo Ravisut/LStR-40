@@ -1,0 +1,4 @@
+indexAround,Balance,Asset,PriceRe,PriceNow,Dif,Multiply,Condition,Stat,Side,Amount,Date,Timer,IDorder,Filled,ValueAdjust
+Around,1,,,,,0.01,2,,,,,,,,
+x,USD,BTC,x,x,x,x,x,x,x,x,x,x,x,x,x
+1,58.83692796,0.0009993,9285,9280.5,-4.5,0.01,2,Wait,,,,,,,

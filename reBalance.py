@@ -12,7 +12,7 @@ gc = gspread.authorize(creds)
 
 #subAsset = ["BNB","XRP"]
 
-subAsset = ["BNB"]
+subAsset = ["BTC"]
 
 #Update while Loop
 while True:
