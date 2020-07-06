@@ -1,5 +1,4 @@
-import tradeFuntion
-
+#pip3 install --upgrade pip --user
 import ccxt
 import json
 import time
@@ -13,8 +12,8 @@ whatbroker ='ftx'
 if whatbroker == "ftx":
     subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
     exchange = ccxt.ftx({
-        'apiKey': '-----------------',
-        'secret': '------------------',
+        'apiKey': '------------',
+        'secret': '------------',
         'enableRateLimit': True,
     })
     if subaccount == "":
@@ -26,15 +25,15 @@ if whatbroker == "ftx":
 
 if whatbroker == "binance":
     exchange = ccxt.binance({
-        'apiKey': '-----------',
-        'secret': '------------',
+        'apiKey': '--------------',
+        'secret': '--------------',
         'enableRateLimit': True,
     })
 
 if whatbroker == "kucoin":
     exchange = ccxt.kucoin({
-        'apiKey': '-----------',
-        'secret': '------------',
+        'apiKey': '---------------',
+        'secret': '---------------',
         'password': '---------',
         'enableRateLimit': True,
     })
@@ -87,7 +86,7 @@ def updatee(df,AroundIndex,SubAsset):
         dif = abs(df.loc[AroundIndex]['Dif'])
 
         # ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
-        conditionToAdjust = tradeFuntion.whatFunction(df, AroundIndex, 'percent')
+        conditionToAdjust = whatFunction(df, AroundIndex, 'percent',whatsymbol)
 
         if conditionToAdjust < dif:  # ถ้าส่วนต่าง (dif) มากกว่า เงื่อนไข%(conditionToAdjust) ที่ตั้งไว้ บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
             df._set_value(AroundIndex, 'Stat', 'Action')
@@ -248,4 +247,42 @@ def LineNotify(df,Around,subasset,typee) :
         msg = '\nแจ้งคนเขียน\n'+str(subasset)
     r = requests.post(url, headers=headers, data={'message': msg})
     print(r.text)
+
+
+def whatFunction(df,Around,whatfution,whatsymbol):
+    if whatfution == 'percent':
+        conditionToAdjust1 = df.loc[Around]['PriceRe']
+        conditionToAdjust2 = 1
+
+        OHLC(whatsymbol)
+
+        atr30hours = conditionToAdjust2
+        conditionToAdjust3 = (float(conditionToAdjust1) / 100) * float(conditionToAdjust2) # ตรวจดูว่า เกิน 1%ยัง
+
+        return  conditionToAdjust3
+
+#เครดิต คุณ Sippavit Kittirattanadul
+def OHLC(pair):  # นำขั้นตอนการเรียกข้อมุล ohlc มารวมเป็น function เพื่อเรียกใช้งานได้เรื่อยๆ
+
+    try:  # try/except ใช้แก้ error : Connection aborted https://github.com/ccxt/ccxt/wiki/Manual#error-handling
+        ohlc = exchange.fetch_ohlcv(pair, timeframe='5m', limit=300)
+        # print(ohlc)
+    except ccxt.NetworkError as e:
+        print(exchange.id, 'fetch_ohlcv failed due to a network error:', str(e))
+        ohlc = exchange.fetch_ohlcv(pair, timeframe='5m', limit=300)
+        # retry or whatever
+
+    except ccxt.ExchangeError as e:
+        print(exchange.id, 'fetch_ohlcv failed due to exchange error:', str(e))
+        ohlc = exchange.fetch_ohlcv(pair, timeframe='5m', limit=300)
+        # retry or whatever
+
+    except Exception as e:
+        print(exchange.id, 'fetch_ohlcv failed with:', str(e))
+        ohlc = exchange.fetch_ohlcv(pair, timeframe='5m', limit=300)
+        # retry or whatever
+
+    ohlc_df = pd.DataFrame(ohlc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
+    ohlc_df['datetime'] = pd.to_datetime(ohlc_df['datetime'], unit='ms')
+    return ohlc_df
 

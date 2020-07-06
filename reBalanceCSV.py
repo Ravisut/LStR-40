@@ -17,7 +17,6 @@ while True:
          df = callFuntion.updatee(df, Around, subAsset)
          df = df.loc[:, ~df.columns.str.contains('^Unnamed')]  # ลบคอลัม์ที่ไม่ต้องการ
 
-         # print(" รอบ " + str(Around) + ' ของ ' + str(subAsset[i]) +' มีปริมาณ '+df.loc[Around]['Asset'] +' Balance = ' + df.loc[Around]['Balance'] + ' ' + str(callFuntion.MainAsset))
          print(df.loc[Around].to_frame().T)
          df = df.reset_index()
          df.to_csv("Data.csv", index=False)

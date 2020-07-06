@@ -9,11 +9,11 @@ from gspread_dataframe import get_as_dataframe, set_with_dataframe
 scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("API.json", scope)
 gc = gspread.authorize(creds)
-ws = gc.open("Data").worksheet("BNB") #เรียกชีทหน้า test3
+ws = gc.open("Data").worksheet("BTC") #เรียกชีทหน้า
 
 df = get_as_dataframe(ws)
 
-test = 5
+test = 6
 # พื้นที่ทดสอบฟังก์ชั่น ก่อนเอาไปใส่ใน คลาส reBalance
 if test == 1: # เรียกดูว่า เหรียญนั้นๆ มีจำนวนเท่าไร
     df = callFuntion.get_balance('BNB', 1)
@@ -40,6 +40,10 @@ if test == 5: #ทดสอบเวลา
     timeElapsed = target_time - start_time
     print(timeElapsed)
     #delta = target_time - start_time
+
+if test ==6:
+    oderinfo = callFuntion.OHLC("BTC/USD")
+    print(oderinfo)
 
 
 
