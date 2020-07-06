@@ -11,33 +11,13 @@ import numpy as np
 whatbroker ='ftx'
 MainAsset = 'USDT'
 
-if whatbroker == "binance":
-    result = 'balances'
-    listAsset = 'asset'
-    exchange = ccxt.binance({
-        'apiKey': '---------------------',
-        'secret': '---------------------',
-        'enableRateLimit': True,
-    })
-
-if whatbroker == "kucoin":
-    result = 'data'
-    listAsset = 'currency'
-    typeaccount = 'type'
-    exchange = ccxt.kucoin({
-        'apiKey': '---------------------',
-        'secret': '----------------------',
-        'password': '-----------------',
-        'enableRateLimit': True,
-    })
-
 if whatbroker == "ftx":
     result = 'result'
     listAsset = 'coin'
     subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
     exchange = ccxt.ftx({
-        'apiKey': '-------------------------',
-        'secret': '-------------------------',
+        'apiKey': '-------------',
+        'secret': '--------------',
         'enableRateLimit': True,
     })
     if subaccount == "":
@@ -46,6 +26,26 @@ if whatbroker == "ftx":
         exchange.headers = {
             'FTX-SUBACCOUNT': subaccount,
         }
+
+if whatbroker == "binance":
+    result = 'balances'
+    listAsset = 'asset'
+    exchange = ccxt.binance({
+        'apiKey': '--------------',
+        'secret': '---------------',
+        'enableRateLimit': True,
+    })
+
+if whatbroker == "kucoin":
+    result = 'data'
+    listAsset = 'currency'
+    typeaccount = 'type'
+    exchange = ccxt.kucoin({
+        'apiKey': '------------',
+        'secret': '------------',
+        'password': '-------',
+        'enableRateLimit': True,
+    })
 
 ########### -------------------------------------------------------------
 
@@ -58,35 +58,32 @@ def updatee(df,_AroundIndex,SubAsset):
         whatsymbol = 'BTC/USDT'
 
     condition_ = df.loc['Around']['Condition']
-
     AroundIndex = int(_AroundIndex) #แปลง index จากสติง เป็น int เพราะ ไม่นั้นเด๊ว error ValueError: could not convert string to float
-    Multiply =  df.loc['Around']['Multiply']
-
-
-
-    df._set_value(AroundIndex, 'Multiply', Multiply)
-    df._set_value(AroundIndex, 'Balance', get_balance(MainAsset,1))
-    df._set_value(AroundIndex, 'Asset', get_balance(SubAsset,1)) # ต้องมี Asset ที่ต้องการรีมาสักนิด เพื่อไม่ให้ error KeyError: 'XRP'
-    #df._set_value(AroundIndex, 'Asset', 50000)  #จำลอง สินค้า
-    df._set_value(AroundIndex, 'PriceNow', getPrice(whatsymbol))
-    df._set_value(AroundIndex, 'Condition', condition_)
-
-
-    if(AroundIndex == 1): # ถ้ารีครั้งแรก
-        if df.loc[AroundIndex, 'PriceRe'] == 'x0':
-            PriceRe = df.loc[AroundIndex]['PriceNow']
-            df._set_value(AroundIndex, 'PriceRe', PriceRe)
-
-    difValue1 = df.loc[AroundIndex]['PriceRe']
-    difValue2 = df.loc[AroundIndex]['PriceNow']
-    difValue3 = float(difValue2) - float(difValue1)
-
-    df._set_value(AroundIndex, 'Dif', difValue3)
-    dif = abs(df.loc[AroundIndex]['Dif'])
 
     if df.loc[AroundIndex, 'IDorder'] != 'x0':  # ช่องไอดี ว่างไหม ถ้าไม่ว่างแสดงว่า ตั้ง pending อยู่
         df = orderFilled(df, AroundIndex, '', SubAsset, 2)  # เช็ค ว่าลิมิตออเดอร์ ว่า fill ยัง
     else:
+        Multiply = df.loc['Around']['Multiply']
+        df._set_value(AroundIndex, 'Multiply', Multiply)
+        df._set_value(AroundIndex, 'Balance', get_balance(MainAsset, 1))
+        df._set_value(AroundIndex, 'Asset',
+                      get_balance(SubAsset, 1))  # ต้องมี Asset ที่ต้องการรีมาสักนิด เพื่อไม่ให้ error KeyError: 'XRP'
+        # df._set_value(AroundIndex, 'Asset', 50000)  #จำลอง สินค้า
+        df._set_value(AroundIndex, 'PriceNow', getPrice(whatsymbol))
+        df._set_value(AroundIndex, 'Condition', condition_)
+
+        if (AroundIndex == 1):  # ถ้ารีครั้งแรก
+            if df.loc[AroundIndex, 'PriceRe'] == 'x0':
+                PriceRe = df.loc[AroundIndex]['PriceNow']
+                df._set_value(AroundIndex, 'PriceRe', PriceRe)
+
+        difValue1 = df.loc[AroundIndex]['PriceRe']
+        difValue2 = df.loc[AroundIndex]['PriceNow']
+        difValue3 = float(difValue2) - float(difValue1)
+
+        df._set_value(AroundIndex, 'Dif', difValue3)
+        dif = abs(df.loc[AroundIndex]['Dif'])
+
         # ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
         conditionToAdjust = tradeFuntion.whatFunction(df, AroundIndex, 'percent')
 
