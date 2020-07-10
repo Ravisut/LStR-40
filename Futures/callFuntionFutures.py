@@ -12,8 +12,8 @@ Asset = 'XRP'
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '----------------',
-        'secret': '-----------------',
+        'apiKey': '---------------',
+        'secret': '----------------',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -35,21 +35,17 @@ def updatee(df,AroundIndex):
     Multiply = df.loc['Around']['Multiply']
 
     if pd.notna(df.loc[AroundIndex, 'IDorder']):  # ช่องไอดี ว่างไหม ถ้าไม่ว่างแสดงว่า ตั้ง pending อยู่
-        df = orderFilled(df, AroundIndex,'','Filled',Multiply)  # เช็ค ว่าลิมิตออเดอร์ ว่า fill ยัง
+        df = orderFilled(df, AroundIndex,Multiply)  # เช็ค ว่าลิมิตออเดอร์ ว่า fill ยัง
     else:
-
-
         df._set_value(AroundIndex, 'Balance', get_balance(Balance))
         df._set_value(AroundIndex, 'Multiply', Multiply)
 
         ExposurePointer = df.loc['Around']['ExposureReal']
         price = getPrice(whatsymbol)
 
-        if ExposurePointer == 0:
+        if ExposurePointer == 0: # รันบอทครั้งแรก ยิง position size = ราคา
             difValue = 0 - price
-            difToAmount = abs(difValue)
-            amount = difToAmount / price  # ปริมาณสินค้าที่จะตั้งออเดอร์
-            df._set_value(AroundIndex, 'Amount', amount*Multiply)
+            amount = abs(difValue) / price  # ปริมาณสินค้าที่จะตั้งออเดอร์
             conditionToAdjust = True
 
         if ExposurePointer > 0:
@@ -57,36 +53,24 @@ def updatee(df,AroundIndex):
             df._set_value(AroundIndex, 'ExposureRerate', exposurePointer)
             df._set_value(AroundIndex, 'ExposureReal', ExposurePointer)
             df._set_value(AroundIndex, 'Price', getPrice(whatsymbol))
-
             difValue = float(exposurePointer) - float(price)
-            difToAmount = abs(difValue)
-            amount = difToAmount / price  # ปริมาณสินค้าที่จะตั้งออเดอร์
-            df._set_value(AroundIndex, 'Amount', amount*Multiply) # ตัวแสดงโชว์ อย่าไป ใส่ Multiply ที่ตัวแปร อื่น เพราะมันมี อยู่ในฟังก์ชั่นอื่นแล้ว
+            amount = abs(difValue) / price  # ปริมาณสินค้าที่จะตั้งออเดอร์
             # ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
             conditionToAdjust = tradeFunction(df, AroundIndex, whatsymbol)
-            print(conditionToAdjust)
 
             #### ปัญหาาา ******************* เกิด ไอตัวคูณซ้ำๆ แล้วมันมากกว่า ราคา เลย ออกออเดอร์ buy
-
         if  conditionToAdjust == True  :  # ถ้าส่วนต่าง (dif) มากกว่า เงื่อนไข%(conditionToAdjust) ที่ตั้งไว้ บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
-            df._set_value(AroundIndex, 'Stat', 'Action')
-
             if pd.isna(df.loc[AroundIndex, 'IDorder']):  # ถ้าช่อง ไอดีออเดอร์ยังว่าง แสดงว่าเป็นเงื่อนไขแรก ไม่มีการตั้งลิมิต
-
+                df._set_value(AroundIndex, 'Stat', 'Action')
                 if difValue > 0:  # ถ้าส่วนต่าง เป็นบวกแสดงว่า ราคา ต่ำกว่า exposure
                     df._set_value(AroundIndex, 'Side',"BUY")  # ต้อง set ค่าเริ่มต้นในชีทให้เป็น สติง ก่อน ไม่นั้นมันจะคิดว่า ช่องว่างๆ คือ ค่า float error ValueError: could not convert string to float
-                    orderrr = re(whatsymbol, 'buy',Balance ,amount,Multiply, price)  # ยิงออเดอร์
-                    df = orderFilled(df, AroundIndex, orderrr,'SetOrder',Multiply)  # ส่งข้อมูล ไอดีออเดอร์และวันที่ # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
-
+                    df = re(df,AroundIndex,whatsymbol, 'buy' ,amount,Multiply, price)  # ยิงออเดอร์
                 if difValue < 0:  # ถ้าส่วนต่าง ติดลบแสดงว่า ราคา สูงกว่า exposure
                     df._set_value(AroundIndex, 'Side', "SELL")
-                    orderrr = re(whatsymbol, 'sell',Balance ,amount,Multiply, price)  # ยิงออเดอร์
-                    df = orderFilled(df, AroundIndex, orderrr,'SetOrder',Multiply)  # ส่งข้อมูล ไอดีออเดอร์และวันที่ และ # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
-
+                    df = re(df,AroundIndex,whatsymbol, 'sell' ,amount,Multiply, price)  # ยิงออเดอร์
         else:  # ยังไม่เข้าเงื่อนไข รอไปก่อน
             df._set_value(AroundIndex, 'Stat', 'Wait')  # 'Stat ' กับ 'Stat' ถ้ามีช่องว่าง คือไม่ใช่คำเดียวกัน
     return df
-
 
 def get_balance(get_asset):
     result = 'result'
@@ -98,71 +82,57 @@ def get_balance(get_asset):
     df_balance['free'] = df_balance.free.astype(float)
     return df_balance.loc[get_asset]['free']
 
-
-#def getfreeCol(): #Get Free Collatoral
-    #freeCol = exchange.private_get_wallet_balances()['result'][0]['free']
-#    return freeCol
-
-
 def getPrice(pair):
     r = json.dumps(exchange.fetch_ticker(pair))
     dataPrice = json.loads(r)
     sendBack = float(dataPrice['last'])
     return sendBack
 
-def re(symbol,side,_mainAsset,amount,Multiply,price):
+def re(df,Around,symbol,side,amount,Multiply,price):
     types = 'limit'  # 'limit' or 'market'
-    order = exchange.create_order(symbol, types, side, amount * Multiply, price)
-    return order
+    _amount = amount* Multiply
+    order = exchange.create_order(symbol, types, side, _amount, price)
 
-def orderFilled(df,Around,order,typee,Multiply):
-
-    if typee == 'SetOrder': # บันทึก ไอดีออเดอร์ และวันที่ ตั้งลิมิต
-        df._set_value(Around, 'IDorder', order['id']) #รับไอดี
-        df._set_value(Around, 'Date', order['datetime'])
-        df._set_value(Around, 'Timer', time.time())
-
-    if typee == 'Filled': #เช็คดว่า แมต ยังหรือยัง # ต้นทางเช็คมาแล้วว่า ID ไม่ว่าง แสดงว่ามีการตั้ง Pending ออเดอร์
-        id = df.loc[Around]['IDorder']
-        orderMatched = checkByIDoder(id)
-
-        if orderMatched['filled'] > 0:  # เช็ค Matched ไหม # ถ้ามากกว่า 0 แสดงว่า ลิมิตออเดอร์ แมต แล้ว..
-            if orderMatched['filled'] == orderMatched['amount']: # ถ้าแมตแล้ว จำนวนตรงกัน
-                # เติมข้อมูล ออเดอร์ที่แมตแล้ว พร้อมคำนวณ exposure
-                df._set_value(Around, 'Filled', orderMatched['filled'])
-                PositionSize = orderMatched['filled'] * orderMatched['price']
-
-                if orderMatched['side'] == 'buy':
-                    PositionSizeAdjust = PositionSize * (-1)
-                    df._set_value(Around, 'PositionSize', PositionSizeAdjust)
-                    ExposurePointer = df.loc['Around']['ExposureReal'] + PositionSizeAdjust
-                    exposurePointer = ExposurePointer / float(Multiply)
-                    df._set_value('Around', 'ExposureReal', ExposurePointer)
-                    df._set_value('Around', 'ExposureRerate', exposurePointer)
-
-                if orderMatched['side'] == 'sell':
-                    PositionSizeAdjust = PositionSize
-                    df._set_value(Around, 'PositionSize', PositionSizeAdjust)
-                    ExposurePointer = df.loc['Around']['ExposureReal'] + PositionSizeAdjust
-                    exposurePointer = ExposurePointer / float(Multiply)
-                    df._set_value('Around', 'ExposureReal', ExposurePointer)
-                    df._set_value('Around', 'ExposureRerate', exposurePointer)
-
-            df._set_value(Around, 'Filled', orderMatched['filled'])
-            df._set_value(Around, 'Fee', orderMatched['fee'])
-            df = newrow_index(df, Around) #ขึนรอบใหม่ บรรทัดใหม่
-            LineNotify(df, Around, 'change')
-        else:
-            if orderMatched['type'] == 'limit':
-                # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
-                first_time = df.loc[Around]['Timer']
-                start_time = first_time + 600  # นับถอยหลัง 10 นาที เพื่อยกเลิกออเดอร์
-                target_time = time.time()
-                timeElapsed = target_time - start_time
-                if timeElapsed > 0:
-                    cancelOrder(df, Around, id)
+    df._set_value(Around, 'Amount',_amount)
+    df._set_value(Around, 'IDorder', order['id'])  # รับไอดี
+    df._set_value(Around, 'Date', order['datetime'])
+    df._set_value(Around, 'Timer', time.time())
     return df
 
+def orderFilled(df,Around,Multiply): #เช็คดว่า แมต ยังหรือยัง # ต้นทางเช็คมาแล้วว่า ID ไม่ว่าง แสดงว่ามีการตั้ง Pending ออเดอร์
+    id = df.loc[Around]['IDorder']
+    orderMatched = checkByIDoder(id)
+    if orderMatched['filled'] > 0:  # เช็ค Matched ไหม # ถ้ามากกว่า 0 แสดงว่า ลิมิตออเดอร์ แมต แล้ว..
+        if orderMatched['filled'] == orderMatched['amount']:  # ถ้าแมตแล้ว จำนวนตรงกัน
+            # เติมข้อมูล ออเดอร์ที่แมตแล้ว พร้อมคำนวณ exposure
+            df._set_value(Around, 'Filled', orderMatched['filled'])
+            PositionSize = orderMatched['filled'] * orderMatched['price']
+            if orderMatched['side'] == 'buy':
+                PositionSize = PositionSize * (-1)
+
+            df._set_value(Around, 'PositionSize', PositionSize)
+            df._set_value(Around, 'Fee', orderMatched['fee'])
+            df._set_value(Around, 'Cost', orderMatched['cost'])
+
+            ExposurePointer = df.loc['Around']['ExposureReal'] + PositionSize
+            exposurePointer = ExposurePointer / float(Multiply)
+            df._set_value('Around', 'ExposureReal', ExposurePointer)
+            df._set_value('Around', 'ExposureRerate', exposurePointer)
+
+        df._set_value(Around, 'Filled', orderMatched['filled'])
+        df._set_value(Around, 'Fee', orderMatched['fee'])
+        df = newrow_index(df, Around)  # ขึนรอบใหม่ บรรทัดใหม่
+        LineNotify(df, Around, 'change')
+    else:
+        if orderMatched['type'] == 'limit':
+            # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
+            first_time = df.loc[Around]['Timer']
+            start_time = first_time + 600  # นับถอยหลัง 10 นาที เพื่อยกเลิกออเดอร์
+            target_time = time.time()
+            timeElapsed = target_time - start_time
+            if timeElapsed > 0:
+                cancelOrder(df, Around, id)
+    return df
 
 def checkByIDoder(id):
     oderinfo = exchange.fetch_order(id)
@@ -171,8 +141,8 @@ def checkByIDoder(id):
 def cancelOrder(df,Around,id):
     exchange.cancel_order(id)
     # ถ้า cancel แล้วต้องเคลียร์ค่าเก่าออกให้หมด ไม่นั้นจะ error ccxt.base.errors.InvalidOrder: order_not_exist_or_not_allow_to_cancel
-    df._set_value(Around, 'IDorder', '')
     df._set_value(Around, 'Amount', '')
+    df._set_value(Around, 'IDorder', '')
     df._set_value(Around, 'Date', '')
     df._set_value(Around, 'Timer', '')
 
@@ -246,7 +216,7 @@ def LineNotify(df,Around,typee) :
     if typee == 'change':
         PositionSize = df.loc[Around]['PositionSize']
         Exposure = df.loc['Around']['ExposureReal']
-        msg = Exposure+PositionSize
+        msg = Exposure+"\n"+PositionSize
         r = requests.post(url, headers=headers, data={'message': msg})
         print(r.text)
     if typee == 'error' :
