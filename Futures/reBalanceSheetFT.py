@@ -2,6 +2,7 @@ import callFuntionFutures
 
 import gspread
 import time
+import pandas as pd
 import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
@@ -23,6 +24,7 @@ while True:
          df = df.loc[:, ~df.columns.str.contains('^Unnamed')]  # ลบคอลัม์ที่ไม่ต้องการ
 
          # print(" รอบ " + str(Around) + ' ของ ' + str(subAsset[i]) +' มีปริมาณ '+df.loc[Around]['Asset'] +' Balance = ' + df.loc[Around]['Balance'] + ' ' + str(callFuntion.MainAsset))
+         pd.set_option('display.width', None)
          print(df.loc[Around].to_frame().T)
          set_with_dataframe(gc.open("Data").worksheet('PERP'), df.reset_index())  # บันทึกลง ชีทหน้า
 

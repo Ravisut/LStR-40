@@ -8,12 +8,12 @@ import numpy as np
 
 #### รายละเอียด ก่อนเทรด -------------------------------------------------------
 Balance = 'USD'
-Asset = 'TRX'
+Asset = 'XRP'
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '-----------',
-        'secret': '-----------',
+        'apiKey': '----------------',
+        'secret': '-----------------',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -32,54 +32,58 @@ if Asset == 'TRX':
 ########### ----------------------------------------------------------------------------
 
 def updatee(df,AroundIndex):
+    Multiply = df.loc['Around']['Multiply']
+
     if pd.notna(df.loc[AroundIndex, 'IDorder']):  # ช่องไอดี ว่างไหม ถ้าไม่ว่างแสดงว่า ตั้ง pending อยู่
-        df = orderFilled(df, AroundIndex,'','Filled')  # เช็ค ว่าลิมิตออเดอร์ ว่า fill ยัง
+        df = orderFilled(df, AroundIndex,'','Filled',Multiply)  # เช็ค ว่าลิมิตออเดอร์ ว่า fill ยัง
     else:
-        Multiply = df.loc['Around']['Multiply']
-        ExposurePointer = df.loc['Around']['ExposureReal']
-        exposurePointer = df.loc['Around']['ExposureRerate']
+
 
         df._set_value(AroundIndex, 'Balance', get_balance(Balance))
         df._set_value(AroundIndex, 'Multiply', Multiply)
-        df._set_value(AroundIndex, 'ExposureReal', ExposurePointer)
-        df._set_value(AroundIndex, 'ExposureRerate', exposurePointer)
-        df._set_value(AroundIndex, 'Price', getPrice(whatsymbol))
 
+        ExposurePointer = df.loc['Around']['ExposureReal']
         price = getPrice(whatsymbol)
-        difValue = float(exposurePointer) - float(price)
-        difToAmount = abs(difValue)
-        df._set_value(AroundIndex, 'Dif', difValue)
 
-        if exposurePointer == 0 :
-            df._set_value('Around', 'ExposureRerate', getPrice(whatsymbol))
-            return df
+        if ExposurePointer == 0:
+            difValue = 0 - price
+            difToAmount = abs(difValue)
+            amount = difToAmount / price  # ปริมาณสินค้าที่จะตั้งออเดอร์
+            df._set_value(AroundIndex, 'Amount', amount*Multiply)
+            conditionToAdjust = True
 
-        # ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
-        conditionToAdjust = tradeFunction(df, AroundIndex,whatsymbol)
-        df._set_value(AroundIndex, 'Condition', conditionToAdjust)
+        if ExposurePointer > 0:
+            exposurePointer = df.loc['Around']['ExposureRerate']
+            df._set_value(AroundIndex, 'ExposureRerate', exposurePointer)
+            df._set_value(AroundIndex, 'ExposureReal', ExposurePointer)
+            df._set_value(AroundIndex, 'Price', getPrice(whatsymbol))
+
+            difValue = float(exposurePointer) - float(price)
+            difToAmount = abs(difValue)
+            amount = difToAmount / price  # ปริมาณสินค้าที่จะตั้งออเดอร์
+            df._set_value(AroundIndex, 'Amount', amount*Multiply) # ตัวแสดงโชว์ อย่าไป ใส่ Multiply ที่ตัวแปร อื่น เพราะมันมี อยู่ในฟังก์ชั่นอื่นแล้ว
+            # ฟังก์ชั่นเช็ค ทุกๆ x% ทุกๆ 1 นาที
+            conditionToAdjust = tradeFunction(df, AroundIndex, whatsymbol)
+            print(conditionToAdjust)
+
+            #### ปัญหาาา ******************* เกิด ไอตัวคูณซ้ำๆ แล้วมันมากกว่า ราคา เลย ออกออเดอร์ buy
 
         if  conditionToAdjust == True  :  # ถ้าส่วนต่าง (dif) มากกว่า เงื่อนไข%(conditionToAdjust) ที่ตั้งไว้ บอกสถานะว่า ได้เข้าเงื่อนไขรีบาลานซ์
             df._set_value(AroundIndex, 'Stat', 'Action')
-            _Amount = difToAmount / price # ปริมาณสินค้าที่จะตั้งออเดอร์
-            df._set_value(AroundIndex, 'Amount', _Amount)
-            amount = df.loc[AroundIndex]['Amount']
-            price = df.loc[AroundIndex]['Price']
 
             if pd.isna(df.loc[AroundIndex, 'IDorder']):  # ถ้าช่อง ไอดีออเดอร์ยังว่าง แสดงว่าเป็นเงื่อนไขแรก ไม่มีการตั้งลิมิต
 
-                if difValue < 0:  # ส่วนต่าง ถ้าขาด ให้เติมโดย ซื้อเข้า
+                if difValue > 0:  # ถ้าส่วนต่าง เป็นบวกแสดงว่า ราคา ต่ำกว่า exposure
                     df._set_value(AroundIndex, 'Side',"BUY")  # ต้อง set ค่าเริ่มต้นในชีทให้เป็น สติง ก่อน ไม่นั้นมันจะคิดว่า ช่องว่างๆ คือ ค่า float error ValueError: could not convert string to float
                     orderrr = re(whatsymbol, 'buy',Balance ,amount,Multiply, price)  # ยิงออเดอร์
                     df = orderFilled(df, AroundIndex, orderrr,'SetOrder',Multiply)  # ส่งข้อมูล ไอดีออเดอร์และวันที่ # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
 
-                if difValue > 0:  # ส่วนต่าง ถ้าเกิน ให้ ขายออก
+                if difValue < 0:  # ถ้าส่วนต่าง ติดลบแสดงว่า ราคา สูงกว่า exposure
                     df._set_value(AroundIndex, 'Side', "SELL")
                     orderrr = re(whatsymbol, 'sell',Balance ,amount,Multiply, price)  # ยิงออเดอร์
                     df = orderFilled(df, AroundIndex, orderrr,'SetOrder',Multiply)  # ส่งข้อมูล ไอดีออเดอร์และวันที่ และ # ถ้ายิงออเดอร์ และแมตซ์ ให้ขึ้นบรรทัดใหม่และ +1 รอบ
 
         else:  # ยังไม่เข้าเงื่อนไข รอไปก่อน
-            print(conditionToAdjust)
-            df._set_value(AroundIndex, 'Condition', conditionToAdjust)
             df._set_value(AroundIndex, 'Stat', 'Wait')  # 'Stat ' กับ 'Stat' ถ้ามีช่องว่าง คือไม่ใช่คำเดียวกัน
     return df
 
@@ -131,16 +135,16 @@ def orderFilled(df,Around,order,typee,Multiply):
                 if orderMatched['side'] == 'buy':
                     PositionSizeAdjust = PositionSize * (-1)
                     df._set_value(Around, 'PositionSize', PositionSizeAdjust)
-                    ExposurePointer = df.loc[Around]['ExposureReal'] + PositionSizeAdjust
-                    exposurePointer = ExposurePointer/Multiply
+                    ExposurePointer = df.loc['Around']['ExposureReal'] + PositionSizeAdjust
+                    exposurePointer = ExposurePointer / float(Multiply)
                     df._set_value('Around', 'ExposureReal', ExposurePointer)
                     df._set_value('Around', 'ExposureRerate', exposurePointer)
 
                 if orderMatched['side'] == 'sell':
                     PositionSizeAdjust = PositionSize
                     df._set_value(Around, 'PositionSize', PositionSizeAdjust)
-                    ExposurePointer = df.loc[Around]['ExposureReal'] + PositionSizeAdjust
-                    exposurePointer = ExposurePointer / Multiply
+                    ExposurePointer = df.loc['Around']['ExposureReal'] + PositionSizeAdjust
+                    exposurePointer = ExposurePointer / float(Multiply)
                     df._set_value('Around', 'ExposureReal', ExposurePointer)
                     df._set_value('Around', 'ExposureRerate', exposurePointer)
 
@@ -185,22 +189,25 @@ def newrow_index(df,Around):
 
 def tradeFunction(df,Around,whatsymbol):
     ExposureRerate = df.loc['Around']['ExposureRerate']
-    Price = df.loc[Around]['Price']
+    Price = getPrice(whatsymbol)
     dif = abs(ExposureRerate - Price) / (ExposureRerate / 100)
     minPercent = 0.5
 
     oderinfo = OHLC(whatsymbol)
     oderinfo['Percent_Change'] = ((oderinfo['high'] - oderinfo['low']) / (oderinfo['low'] / 100))
     mean4hr180 = oderinfo["Percent_Change"].mean()
-    print(dif)
-    print(mean4hr180)
+
+    df._set_value(Around, 'Dif', ExposureRerate - Price)
+    df._set_value(Around, 'DifPercent', dif)
+    df._set_value(Around, 'Condition', mean4hr180)
+
     minPercentToAdjust = (float(ExposureRerate) / 100) * float(minPercent)  # ตรวจดูว่า เกิน 0.5%ยัง
 
     if mean4hr180 > minPercentToAdjust:
         if dif > mean4hr180:
             return True #เข้าเงื่อนไขจริง
     else:
-        return False
+        return False #https://stackoverflow.com/questions/19498572/why-do-i-get-none-instead-of-true-false-in-python
 
 
 #ดึงข้อมูลราคา เครดิต คุณ Sippavit Kittirattanadul
