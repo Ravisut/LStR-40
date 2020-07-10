@@ -4,8 +4,8 @@ import pandas as pd
 
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '67ocpnDbgwgmRhYyVocUjuuHgvzUQIdMGgpavMsP',
-        'secret': 'dSF5qS_E2t6iNgmBPC2DorSwwatMsM0blFf1zeQI',
+        'apiKey': '---------',
+        'secret': '---------',
         'enableRateLimit': True,
     })
 if subaccount == "":
