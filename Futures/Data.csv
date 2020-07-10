@@ -1,0 +1,4 @@
+﻿indexAround,Balance,Price,PositionSize,Dif,Multiply,Condition,Stat,Side,Amount,Date,Timer,IDorder,Filled
+Around,1,,,,1000,2,,,,,,,
+x,USD,BTC,x,x,x,percnetToRe,x,BUY_SELL,x,x,countdownTocencelOrder,getID,x
+1,,,0,,,,,,,,,,
