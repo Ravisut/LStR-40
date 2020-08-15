@@ -15,8 +15,8 @@ gc = gspread.authorize(creds)
 
 # เรียกข้อมูลใน google sheet และตั้งให้ คอลัม Product เป็น index ไว้ให้ pandas เรียกใช้
 df = get_as_dataframe(gc.open("Data").worksheet('PERP') ).set_index('Product')
-#เปิดหน้าชีท Map
 dfMap = get_as_dataframe(gc.open("Data").worksheet('Map'))
+dfTradeLog = get_as_dataframe(gc.open("Data").worksheet('TradeLog'))
 
 #### รายละเอียด ก่อนเทรด -------------------------------------------------------
 Balance = 'USD'
@@ -24,8 +24,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '-------------',
-        'secret': '--------------',
+        'apiKey': '---------',
+        'secret': '----------',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -37,10 +37,8 @@ else:
 
 ########### ----------------------------------------------------------------------------
 StartPrice = df.loc[whatsymbol]['StartPrice']
-Multiply = df.loc[whatsymbol]['Multiply']
-RangMap = 10
-difZone = 0.005
-Exposure = 1 * Multiply
+Multiply = df.loc[whatsymbol]['Leverage']
+difZone = df.loc[whatsymbol]['DifZone']
 #------------------------------
 
 def updatee():
@@ -62,13 +60,8 @@ def updatee():
         # ----- ดูว่าเข้าเงื่อนไขเทรดยัง
         Trigger_trade()
 
-    NowPrice = getPrice(whatsymbol)
-    df._set_value(whatsymbol, 'NowPrice', NowPrice)
-    DifPrice = float(NowPrice) - float( StartPrice)
-    df._set_value(whatsymbol, 'DifPrice', DifPrice)
-
     # ----- ตั้งค่า Map ว่าแต่ล่ะโซนควรมีกระสุนหรือไม่-----
-    Set_MapTrigger(NowPrice, DifPrice)
+    Set_MapTrigger()
     # ---- ดู NAV กระสุนแต่ล่ะนัด
     Update_NAV()
     # ----- ส่วนแสดงผลในหน้า PERP --------
@@ -76,11 +69,12 @@ def updatee():
     df._set_value(whatsymbol, 'BulletHold', get_BulletHold())
     df._set_value(whatsymbol, 'ExposureSum', get_Expsoure())
 
-
-    dfMapp = dfMap.drop(columns=[c for c in dfMap.columns if "Unnamed" in c]).dropna(how="all")  # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
-    set_with_dataframe(gc.open("Data").worksheet('Map'), dfMapp)  # บันทึก ชีทหน้า Map
-    dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all")  # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
+    dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
     set_with_dataframe(gc.open("Data").worksheet('PERP'), dff.reset_index())  # บันทึกชีทหน้า PERP
+    dfMapp = dfMap.drop(columns=[c for c in dfMap.columns if "Unnamed" in c]).dropna(how="all")
+    set_with_dataframe(gc.open("Data").worksheet('Map'), dfMapp)  # บันทึก ชีทหน้า Map
+    dffTradeLog = dfTradeLog.drop(columns=[c for c in dfTradeLog.columns if "Unnamed" in c]).dropna(how="all")
+    set_with_dataframe(gc.open("Data").worksheet('PERP'), dffTradeLog)  # บันทึกชีทหน้า TradeLog
 
     pd.set_option('display.width', 1000)
     pd.set_option('display.max_columns', 1000)
@@ -93,12 +87,17 @@ def Check_orderFilled():
             idOrderbuy = row['IDorderBuy']
             orderMatchedBUY = checkByIDoder(idOrderbuy)
             if orderMatchedBUY['filled'] > 0:  # จะเปิด ออเดอร์ sell ได้ต้องมี Position Szie ด้าน Buy ก่อน
-                row['Stat'] = 1  # 1 คือ กระสุนเปิด buy ลิมิตสำเร็จแมตซ์แล้ว
-                row['FilledBuy'] = orderMatchedBUY['filled']
-                row['feeBuy'] = Getfee_ByIDoderinMyTrades(id,orderMatchedBUY['side'])
-                # --------
-                # -------- รอใส่ฟังก์ชั่น fee  ถ้าเปิดออเดอร์สำเร็จ
-                # --------
+                if pd.isna(row['FilledBuy']):
+                    row['Stat'] = 1  # 1 คือ กระสุนเปิด buy ลิมิตสำเร็จแมตซ์แล้ว
+                    row['FilledBuy'] = orderMatchedBUY['filled']
+                    row['feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side']) #fee
+                    # บันทึก TradeLog
+                    dfTradeLog.append({'IDorder': row['IDorderBuy'],'Side': orderMatchedBUY['side']
+                                          ,'Price': orderMatchedBUY['price']
+                                          ,'Amount': orderMatchedBUY['filled']
+                                          ,'Exposure': row['ExposureBuy'],'Fee': row['feeBuy']}, ignore_index=True)
+
+
                 if pd.notna(row['IDorderSell']):
                     idOrdersell = row['IDorderSell']
                     orderMatchedSELL = checkByIDoder(idOrdersell)
@@ -106,13 +105,16 @@ def Check_orderFilled():
                         row['Stat'] = 0  # 0 คือ กระสุนเปิด sell ลิมิตสำเร็จแมตซ์แล้ว
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
+                        row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedBUY['side'])  # fee
+                        row['LastClosePrice'] = row['ClosePrice']
                         row['Profit'] = ExposureSell - ExposureBuy
                         row['round'] += 1
-                        row['feeSell'] = Getfee_ByIDoderinMyTrades(id,orderMatchedBUY['side'])
-                        # --------
-                        # -------- รอใส่ฟังก์ชั่น  fee  ถ้าเปิดออเดอร์สำเร็จ
-                        # --------
                         LineNotify(row['Profit'], 'change')
+                        # บันทึก TradeLog
+                        dfTradeLog.append({'IDorder': row['IDorderSell'], 'Side': orderMatchedSELL['side']
+                                              ,'Price': orderMatchedSELL['price']
+                                              ,'Amount': orderMatchedSELL['filled'],'Fee': row['feeSell']
+                                              ,'Exposure': ExposureSell}, ignore_index=True)
 
                         # ลบ ข้อมูลกระสุน เมื่อจบครบรอบ ทำให้กระสุนว่าง
                         # ข้อมูลกระสุน buy
@@ -125,7 +127,6 @@ def Check_orderFilled():
 
                         # ข้อมูลกระสุน sell
                         row['IDorderSell'] = np.nan
-                        row['LastClosePrice'] = row['ClosePrice']
                         row['ClosePrice'] = np.nan
                         row['AmountSell'] = np.nan
 
@@ -183,8 +184,8 @@ def Trigger_trade():
         if pd.isna(row['IDorderBuy']):
             if row['MapTrigger'] == 1 and row['Zone'] > 0 and row['Exposure'] > 0:  # MapTrigger = 1 คือ พื้นที่ๆ ควรมีกระสุน
                 row['Stat'] = -1  # -1 ตั้งลิมิต buy
-                expousre = row['Exposure']
-                amount = abs(expousre) / float(getPrice(whatsymbol))  # ปริมาณสินค้าที่จะตั้งออเดอร์ ตามจำนวนกระสุน
+                expousre = row['Exposure'] * Multiply # คูณเลเวอเรจ
+                amount = abs(expousre) / float(getPrice(whatsymbol))  # ปริมาณสินค้าที่จะตั้งออเดอร์ ต่อ กระสุน 1นัด
 
                 order = re(whatsymbol, 'limit', 'buy', amount)
 
@@ -301,13 +302,15 @@ def LineNotify(mse,typee):
         print(r.text)
 
 ###### ---------- Map   -----------###############
-def Set_MapTrigger(price,DifPrice):
-    # BUY
-    if DifPrice < 0:
+def Set_MapTrigger():
+    NowPrice = getPrice(whatsymbol)
+    df._set_value(whatsymbol, 'NowPrice', NowPrice)
+    DifPrice = float(NowPrice) - float(StartPrice)
+    if DifPrice < 0: # BUY
         for i, row in dfMap.iterrows():
-            if price < row['Zone']:
+            if NowPrice < row['Zone']:
                 row['MapTrigger'] = 1
-            if price > row['Zone']:
+            if NowPrice > row['Zone']:
                 row['MapTrigger'] = -1
 
 ### -------- find min zone as can sell ----------
@@ -354,9 +357,11 @@ def Update_NAV():
 
 
 
-### ----- ฟังก์ชั่นเก่าไม่ใช้งาน ไม่มีผลกับโปรแกรม ------------------------------------------------------------------
+### ----- ฟังก์ชั่นเก่าไม่ใช้งาน ไม่มีผลกับโปรแกรม XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 def LoadMap():
     # Load MapBuy
+    Exposure = 1
+    RangMap = 10
     dfMapBuy = pd.DataFrame({'Zone': [], 'Exposure': []})
     for i in range(RangMap):
         Price = difZone * i
