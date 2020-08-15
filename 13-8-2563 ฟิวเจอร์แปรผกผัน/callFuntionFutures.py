@@ -3,6 +3,7 @@ import json
 import time
 import requests
 import pandas as pd
+from pandas.io.json import json_normalize
 import numpy as np
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -23,8 +24,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '-----------',
-        'secret': '------------',
+        'apiKey': '-------------',
+        'secret': '--------------',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -82,6 +83,7 @@ def updatee():
     set_with_dataframe(gc.open("Data").worksheet('PERP'), dff.reset_index())  # บันทึกชีทหน้า PERP
 
     pd.set_option('display.width', 1000)
+    pd.set_option('display.max_columns', 1000)
     #print(dfMapp)
     print(dff.loc[whatsymbol].to_frame().T)
 
@@ -93,6 +95,7 @@ def Check_orderFilled():
             if orderMatchedBUY['filled'] > 0:  # จะเปิด ออเดอร์ sell ได้ต้องมี Position Szie ด้าน Buy ก่อน
                 row['Stat'] = 1  # 1 คือ กระสุนเปิด buy ลิมิตสำเร็จแมตซ์แล้ว
                 row['FilledBuy'] = orderMatchedBUY['filled']
+                row['feeBuy'] = Getfee_ByIDoderinMyTrades(id,orderMatchedBUY['side'])
                 # --------
                 # -------- รอใส่ฟังก์ชั่น fee  ถ้าเปิดออเดอร์สำเร็จ
                 # --------
@@ -104,7 +107,8 @@ def Check_orderFilled():
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
                         row['Profit'] = ExposureSell - ExposureBuy
-                        row['round'] = row['round'] + 1
+                        row['round'] += 1
+                        row['feeSell'] = Getfee_ByIDoderinMyTrades(id,orderMatchedBUY['side'])
                         # --------
                         # -------- รอใส่ฟังก์ชั่น  fee  ถ้าเปิดออเดอร์สำเร็จ
                         # --------
@@ -117,9 +121,11 @@ def Check_orderFilled():
                         row['AmountBuy'] = np.nan
                         row['FilledBuy'] = np.nan
                         row['ExposureBuy'] = np.nan
+                        row['NAV'] = np.nan
 
                         # ข้อมูลกระสุน sell
                         row['IDorderSell'] = np.nan
+                        row['LastClosePrice'] = row['ClosePrice']
                         row['ClosePrice'] = np.nan
                         row['AmountSell'] = np.nan
 
@@ -203,6 +209,19 @@ def checkByIDoder(id):
     oderinfo = exchange.fetch_order(idStr)
     return oderinfo
 
+#เครดิตพี่นัท LazyTrader
+def Getfee_ByIDoderinMyTrades(id,side):
+    idStr = ('%f' % id).rstrip('0').rstrip('.')  # ลบ .0 หลัง หมายเลขไอดี
+    fetchTrades = exchange.fetch_my_trades(symbol=whatsymbol, since=None, limit=2000, params={})
+    fetchTrades = pd.json_normalize(data=fetchTrades)
+    df_fetchTrades = pd.DataFrame(data=fetchTrades,columns=['info.id','info.side', 'info.fee'])
+    for i, row in df_fetchTrades.iterrows():
+        if row['info.id'] == idStr and row['info.side'] == side:
+            return row['info.fee']
+
+
+
+
 def cancelOrder(id):
     orderMatched = checkByIDoder(id)
     if orderMatched['status'] == 'closed': # ถ้ามัน closed ไปแล้ว แสดงว่าโดนปิดมือ
@@ -271,11 +290,12 @@ def LineNotify(mse,typee):
     headers = {'content-type': 'application/x-www-form-urlencoded', 'Authorization': 'Bearer ' + token}
 
     if typee == 'change':
-
-        msg = mse
+        mse = str(mse)
+        msg = 'Profit : '+ mse
         r = requests.post(url, headers=headers, data={'message': msg})
         print(r.text)
     if typee == 'error' :
+        mse = str(mse)
         msg = '\nแจ้งคนเขียน\n' + mse
         r = requests.post(url, headers=headers, data={'message': msg})
         print(r.text)
@@ -327,14 +347,9 @@ def get_BulletHold():
 def Update_NAV():
     for i, row in dfMap.iterrows():
         if row['FilledBuy'] !=0 and  pd.notna(row['FilledBuy']):
-            NAVdiff = row['FilledBuy'] * getPrice(whatsymbol)
-            NAV = NAVdiff - row['Exposure']
+            Exposurediff = row['FilledBuy'] * getPrice(whatsymbol)
+            NAV = Exposurediff - row['ExposureBuy'] #บัคเดิมคือ row['Exposure'] ทำให้มันไป ลบ exposure มาคอัพแทน exposure จริงที่เปิดได้
             row['NAV'] = NAV
-
-
-
-
-
 
 
 
