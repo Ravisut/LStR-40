@@ -24,8 +24,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '---------',
-        'secret': '----------',
+        'apiKey': '**********',
+        'secret': '***********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -67,14 +67,12 @@ def updatee():
     # ----- ส่วนแสดงผลในหน้า PERP --------
     df._set_value(whatsymbol, 'Balance', get_balance(Balance))
     df._set_value(whatsymbol, 'BulletHold', get_BulletHold())
-    df._set_value(whatsymbol, 'ExposureSum', get_Expsoure())
+    df._set_value(whatsymbol, 'PositionSize', get_Expsoure())
 
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
     set_with_dataframe(gc.open("Data").worksheet('PERP'), dff.reset_index())  # บันทึกชีทหน้า PERP
     dfMapp = dfMap.drop(columns=[c for c in dfMap.columns if "Unnamed" in c]).dropna(how="all")
     set_with_dataframe(gc.open("Data").worksheet('Map'), dfMapp)  # บันทึก ชีทหน้า Map
-    dffTradeLog = dfTradeLog.drop(columns=[c for c in dfTradeLog.columns if "Unnamed" in c]).dropna(how="all")
-    set_with_dataframe(gc.open("Data").worksheet('PERP'), dffTradeLog)  # บันทึกชีทหน้า TradeLog
 
     pd.set_option('display.width', 1000)
     pd.set_option('display.max_columns', 1000)
@@ -82,6 +80,7 @@ def updatee():
     print(dff.loc[whatsymbol].to_frame().T)
 
 def Check_orderFilled():
+    dfTradeLog1 = dfTradeLog
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
             idOrderbuy = row['IDorderBuy']
@@ -92,10 +91,15 @@ def Check_orderFilled():
                     row['FilledBuy'] = orderMatchedBUY['filled']
                     row['feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side']) #fee
                     # บันทึก TradeLog
-                    dfTradeLog.append({'IDorder': row['IDorderBuy'],'Side': orderMatchedBUY['side']
-                                          ,'Price': orderMatchedBUY['price']
-                                          ,'Amount': orderMatchedBUY['filled']
-                                          ,'Exposure': row['ExposureBuy'],'Fee': row['feeBuy']}, ignore_index=True)
+                    # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
+                    # กำหนด PD ก่อน
+                    dfTradeLog2 = pd.DataFrame({'IDorder': [str(idOrderbuy)]
+                                                    ,'Side': [str(orderMatchedBUY['side'])]
+                                                    ,'Price':[str(orderMatchedBUY['price'])]
+                                                    ,'Amount':[str(orderMatchedBUY['filled'])]
+                                                    ,'Exposure':[str(row['ExposureBuy'])]
+                                                    ,'Fee': [str(row['feeBuy'])]})
+                    dfTradeLog1 = dfTradeLog1.append(dfTradeLog2, ignore_index=True) # เหตุผลที่ออก 2 ครั้ง เพราะ มันเพิ่มไปแล้วรอบแรกข้างบน และมา append อีกรอบ
 
 
                 if pd.notna(row['IDorderSell']):
@@ -111,10 +115,13 @@ def Check_orderFilled():
                         row['round'] += 1
                         LineNotify(row['Profit'], 'change')
                         # บันทึก TradeLog
-                        dfTradeLog.append({'IDorder': row['IDorderSell'], 'Side': orderMatchedSELL['side']
-                                              ,'Price': orderMatchedSELL['price']
-                                              ,'Amount': orderMatchedSELL['filled'],'Fee': row['feeSell']
-                                              ,'Exposure': ExposureSell}, ignore_index=True)
+                        dfTradeLog3 = pd.DataFrame({'IDorder': [str(idOrdersell)]
+                                                       , 'Side': [str(orderMatchedSELL['side'])]
+                                                       , 'Price': [str(orderMatchedSELL['price'])]
+                                                       , 'Amount': [str(orderMatchedSELL['filled'])]
+                                                       , 'Exposure': [str(ExposureSell)]
+                                                       , 'Fee': [str(row['feeSell'])]})
+                        dfTradeLog1 = dfTradeLog1.append(dfTradeLog3, ignore_index=True)
 
                         # ลบ ข้อมูลกระสุน เมื่อจบครบรอบ ทำให้กระสุนว่าง
                         # ข้อมูลกระสุน buy
@@ -129,6 +136,9 @@ def Check_orderFilled():
                         row['IDorderSell'] = np.nan
                         row['ClosePrice'] = np.nan
                         row['AmountSell'] = np.nan
+
+    dfTradeLogg = dfTradeLog1.drop(columns=[c for c in dfTradeLog1.columns if "Unnamed" in c]).dropna(how="all")
+    set_with_dataframe(gc.open("Data").worksheet('TradeLog'), dfTradeLogg)  # บันทึกชีทหน้า TradeLog
 
 def Trigger_trade():
     for i, row in dfMap.iterrows():
@@ -162,7 +172,7 @@ def Trigger_trade():
                 if pd.isna(row['IDorderSell']):
                     NowPrice = getPrice(whatsymbol)
                     if pd.notna(row['OpenPrice']):
-                        if NowPrice > (row['OpenPrice'] + difZone):  # ต้องมากกว่า อย่างน้อย 1 โซน ถึงจะปิดกำไรได้
+                        if NowPrice > (row['OpenPrice'] + (difZone*2)):  # ต้องมากกว่า อย่างน้อย 2 โซน ถึงจะปิดกำไรได้
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 row['Stat'] = 2  # 2 คือ sell ลิมิต เพื่อปิดกระสุนนัดนี้
@@ -202,6 +212,7 @@ def Trigger_trade():
 def re(symbol,types,side,amount):
     #types = 'limit'  # 'limit' or 'market'
     order = exchange.create_order(symbol, types, side, amount,getPrice(whatsymbol))
+    #print(order)
     return order
 
 
@@ -214,13 +225,14 @@ def checkByIDoder(id):
 def Getfee_ByIDoderinMyTrades(id,side):
     idStr = ('%f' % id).rstrip('0').rstrip('.')  # ลบ .0 หลัง หมายเลขไอดี
     fetchTrades = exchange.fetch_my_trades(symbol=whatsymbol, since=None, limit=2000, params={})
+
     fetchTrades = pd.json_normalize(data=fetchTrades)
     df_fetchTrades = pd.DataFrame(data=fetchTrades,columns=['info.id','info.side', 'info.fee'])
+    #print(df_fetchTrades)
+    #print(idStr)
     for i, row in df_fetchTrades.iterrows():
         if row['info.id'] == idStr and row['info.side'] == side:
             return row['info.fee']
-
-
 
 
 def cancelOrder(id):
@@ -236,7 +248,7 @@ def TimeDelayForNextTrade():
     oderinfo = OHLC(whatsymbol,3)
     oderinfo['Percent_Change'] = ((oderinfo['high'] - oderinfo['low']) / (oderinfo['low'] / 100))
     mean1hr3 = oderinfo["Percent_Change"].mean()
-    TimerTrigger = 0.6*mean1hr3*100*60
+    TimerTrigger = mean1hr3*0.6*100*60 #ความต่าง 1% เท่ากับ 1ชั่วโมง
 
     return TimerTrigger
 
