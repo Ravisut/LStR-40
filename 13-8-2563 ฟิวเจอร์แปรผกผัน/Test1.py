@@ -1,3 +1,4 @@
+import callFuntionFutures
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -30,6 +31,10 @@ def check2():
     set_with_dataframe(gc.open("Data").worksheet('dfMap'), dfMapp)  # บันทึกชีทหน้า TradeLog
     print(dfMapp)
 
-check2()
+def check3():
+    print(callFuntionFutures.checkByIDoder(7778172502))
+
+
+check3()
 
 
