@@ -24,8 +24,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '-------------',
-        'secret': '--------------',
+        'apiKey': '********************',
+        'secret': '*********************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -93,6 +93,8 @@ def Check_orderFilled():
                     # บันทึก TradeLog
                     # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
                     # กำหนด PD ก่อน
+                    print('OpenOrder Price : '+str(orderMatchedBUY['price']))
+                    print('Amount : '+str(orderMatchedBUY['filled']))
                     dfTradeLog2 = pd.DataFrame({'IDorder': [str(idOrderbuy)]
                                                     ,'Side': [str(orderMatchedBUY['side'])]
                                                     ,'Price':[str(orderMatchedBUY['price'])]
@@ -113,6 +115,8 @@ def Check_orderFilled():
                         row['LastClosePrice'] = row['ClosePrice']
                         row['Profit'] = ExposureSell - ExposureBuy
                         row['round'] += 1
+                        print('OpenOrder Price : ' + str(orderMatchedSELL['price']))
+                        print('Profit : '+str(row))
                         LineNotify(row['Profit'], 'change')
                         # บันทึก TradeLog
                         dfTradeLog3 = pd.DataFrame({'IDorder': [str(idOrdersell)]
@@ -184,7 +188,7 @@ def Trigger_trade():
                 if pd.isna(row['IDorderSell']):
                     NowPrice = getPrice(whatsymbol)
                     if pd.notna(row['OpenPrice']):
-                        if NowPrice > (row['OpenPrice'] + (difZone*2)):  # ต้องมากกว่า อย่างน้อย 2 โซน ถึงจะปิดกำไรได้
+                        if NowPrice > (row['OpenPrice'] + (difZone*3)):  # ต้องมากกว่า อย่างน้อย 3 โซน ถึงจะปิดกำไรได้
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 row['Stat'] = 2  # 2 คือ sell ลิมิต เพื่อปิดกระสุนนัดนี้
