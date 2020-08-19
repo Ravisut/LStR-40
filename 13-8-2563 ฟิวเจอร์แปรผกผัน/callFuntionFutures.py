@@ -24,8 +24,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '***************',
-        'secret': '****************',
+        'apiKey': '*****************',
+        'secret': '******************',
         'enableRateLimit': True,
     })
 if subaccount == "":
