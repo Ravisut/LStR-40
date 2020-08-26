@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*************',
-        'secret': '**************',
+        'apiKey': '**********',
+        'secret': '***********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -238,7 +238,7 @@ def Trigger_trade():
 
         # เงื่อนไข ยิงกระสุน buy ใช้งานกระสุนนัดนี้
         if pd.isna(row['IDorderBuy']):
-            if row['MapTrigger'] == 1 and row['Zone'] > 0 and row['Exposure'] > 0:  # MapTrigger = 1 คือ พื้นที่ๆ ควรมีกระสุน
+            if row['MapTrigger'] == 1 and row['Zone'] > 0 and row['Exposure'] > 0 and row['UseZone'] == 1:  # MapTrigger = 1 คือ พื้นที่ๆ ควรมีกระสุน
                 checktradebuy = False
 
                 if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 20:
@@ -467,15 +467,17 @@ def Set_MapTrigger():
     df._set_value(whatsymbol, 'NowPrice', NowPrice)
     MaxZone = df.loc[whatsymbol]['MaxZone']
     MinZone = df.loc[whatsymbol]['MinZone']
+    MaxLimitZone = 0.4
 
-    DifPrice = float(NowPrice) - float(MaxZone)
+    DifPrice = float(NowPrice) - float(MaxLimitZone)
+    # หรือ NowPrice < MaxLimitZone
     if DifPrice < 0 : # BUY
         for i, row in dfMap.iterrows():
             if row['Zone'] >= MinZone and  row['Zone'] <= MaxZone:
                 row['UseZone'] = 1
             elif row['Zone'] < MinZone or row['Zone'] > MaxZone:
                 row['UseZone'] = -1
-            if NowPrice < row['Zone'] and NowPrice > MinZone:
+            if NowPrice < row['Zone']:
                 row['MapTrigger'] = 1
             elif NowPrice > row['Zone']:
                 row['MapTrigger'] = -1
