@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '********************',
-        'secret': '*********************',
+        'apiKey': '****************',
+        'secret': '*****************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -129,7 +129,12 @@ def Trigger_trade():
                         row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedBUY['side'])  # fee
                         row['LastClosePrice'] = row['ClosePrice']
                         row['Profit'] = ExposureSell - ExposureBuy
-                        row['round'] += 1
+
+                        if pd.isna(row['round']):
+                            row['round'] = 1
+                        elif pd.notna(row['round']):
+                            row['round'] = row['round']+1
+
                         print('OpenOrder Price : ' + str(orderMatchedSELL['price']))
                         print('Profit : ' + str(row))
                         LineNotify(row['Profit'], 'change')
@@ -137,8 +142,8 @@ def Trigger_trade():
                         # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
                         # กำหนด PD ก่อน
                         dfTradeLog3 = pd.DataFrame({'IDorderOrderBuy': [str(idOrderbuy)]
-                                                       , 'Open': [str(orderMatchedBUY['price'])]
                                                        , 'IDorderOrderSell': [str(idOrdersell)]
+                                                       , 'Open': [str(orderMatchedBUY['price'])]
                                                        , 'Close': [str(orderMatchedSELL['price'])]
                                                        , 'Amount': [str(orderMatchedSELL['filled'])]
                                                        , 'TradeTrigger': [str(row['TradeTrigger'])]
@@ -169,7 +174,7 @@ def Trigger_trade():
                         dfTradeLogg = dfTradeLog1.drop(columns=[c for c in dfTradeLog1.columns if "Unnamed" in c]).dropna(how="all")
                         set_with_dataframe(gc.open("Data").worksheet('TradeLog'), dfTradeLogg)  # บันทึกชีทหน้า TradeLog
 
-                    if orderMatchedSELL['filled'] == 0:
+                    elif orderMatchedSELL['filled'] == 0:
                         # ถ้าหมดเวลา cooldown แล้วไม่ได้เปิดสักทีให้ ยกเลิกออเดอร์ลิมิต Sell
                         if pd.notna(row['timecancelsell']):
                             # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
@@ -195,20 +200,16 @@ def Trigger_trade():
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 checktradesell = False
-                                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 89:
+                                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 90:
                                     getRSIvalue = RSI('5m')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
                                         checktradesell = True
 
-                                if row['TradeTrigger'] >= 90 and row['TradeTrigger'] <= 98:
+                                if row['TradeTrigger'] >= 90:
                                     getRSIvalue = RSI('1h')
                                     if getRSIvalue > 70:
-                                        checktradesell = True
-
-                                if row['TradeTrigger'] >= 99:
-                                    getRSIvalue = RSI('1d')
-                                    if getRSIvalue > 70:
+                                        print(getRSIvalue)
                                         checktradesell = True
 
                                 if checktradesell == True:
@@ -226,35 +227,26 @@ def Trigger_trade():
         if pd.isna(row['IDorderBuy']):
             if row['MapTrigger'] == 1 and row['Zone'] > 0 and row['Exposure'] > 0:  # MapTrigger = 1 คือ พื้นที่ๆ ควรมีกระสุน
                 checktradebuy = False
-                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 45:
+                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 50:
                     getRSIvalue = RSI('5m')
                     if getRSIvalue < 40:
                         checktradebuy = True
-                if row['TradeTrigger'] >= 46 and row['TradeTrigger'] <= 89:
+                if row['TradeTrigger'] >= 51 and row['TradeTrigger'] <= 90:
                     getRSIvalue = RSI('5m')
                     if getRSIvalue < 30:
                         checktradebuy = True
 
-                if row['TradeTrigger'] >= 90 and row['TradeTrigger'] <= 94:
+                if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 95:
                     getRSIvalue = RSI('1h')
                     if getRSIvalue < 40:
                         checktradebuy = True
-                if row['TradeTrigger'] >= 95 and row['TradeTrigger'] <= 98:
+                if row['TradeTrigger'] >= 96 and row['TradeTrigger'] <= 100:
                     getRSIvalue = RSI('1h')
                     if getRSIvalue < 30:
                         checktradebuy = True
                         #ถ่วงเวลา ตอนโวเข้า
-                        df._set_value(whatsymbol, 'TimerDelay', time.time())
-                        df._set_value(whatsymbol, 'Stat', 'Cooldown')
-
-                if row['TradeTrigger'] == 99:
-                    getRSIvalue = RSI('1d')
-                    if getRSIvalue < 40:
-                        checktradebuy = True
-                if row['TradeTrigger'] == 100:
-                    getRSIvalue = RSI('1d')
-                    if getRSIvalue < 30:
-                        checktradebuy = True
+                        #df._set_value(whatsymbol, 'TimerDelay', time.time())
+                        #df._set_value(whatsymbol, 'Stat', 'Cooldown')
 
                 if checktradebuy == True :
                     # คูณเลเวอเรจ
