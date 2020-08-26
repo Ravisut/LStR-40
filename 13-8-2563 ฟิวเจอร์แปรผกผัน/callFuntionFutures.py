@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '****************',
-        'secret': '*****************',
+        'apiKey': '*************',
+        'secret': '**************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -37,22 +37,13 @@ else:
     }
 
 ########### ----------------------------------------------------------------------------
-MaxZone = df.loc[whatsymbol]['MaxZone']
-Multiply = df.loc[whatsymbol]['Leverage']
-difZone = df.loc[whatsymbol]['DifZone']
-#------------------------------
+
 
 def updatee():
     # ----- ตั้งค่า Map ว่าแต่ล่ะโซนควรมีกระสุนหรือไม่-----
     Set_MapTrigger()
-    # ---- ดู NAV กระสุนแต่ล่ะนัด
-    Update_NAV()
     # ----- ส่วนแสดงผลในหน้า PERP --------
-    df._set_value(whatsymbol, 'Balance', get_balance(Balance))
-    df._set_value(whatsymbol, 'BulletHold', get_BulletHold())
-    df._set_value(whatsymbol, 'PositionSize', get_Expsoure_Position('Position'))
-    df._set_value(whatsymbol, 'ExposureSize', get_Expsoure_Position('Expsoure'))
-    df._set_value(whatsymbol, 'DifZone', FindDiffZone())
+    set_Maninsheet()
 
     if df.loc[whatsymbol]['Stat'] == 'Cooldown':
         TimerDelay = df.loc[whatsymbol]['TimerDelay']
@@ -83,6 +74,8 @@ def updatee():
 
 def Trigger_trade():
     dfTradeLog1 = dfTradeLog
+    Multiply = df.loc[whatsymbol]['Leverage']
+    difZone = df.loc[whatsymbol]['DifZone']
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
             idOrderbuy = row['IDorderBuy']
@@ -126,17 +119,21 @@ def Trigger_trade():
                     if orderMatchedSELL['filled'] == orderMatchedSELL['amount']:
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
-                        row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedBUY['side'])  # fee
+                        row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedSELL['side'])  # fee
                         row['LastClosePrice'] = row['ClosePrice']
-                        row['Profit'] = ExposureSell - ExposureBuy
+
+                        if pd.isna(row['Profit']):
+                            row['Profit'] = ExposureSell - ExposureBuy
+                        elif pd.notna(row['round']):
+                            row['Profit'] = row['Profit'] + (ExposureSell - ExposureBuy)
 
                         if pd.isna(row['round']):
                             row['round'] = 1
                         elif pd.notna(row['round']):
-                            row['round'] = row['round']+1
+                            row['round'] = row['round'] + 1
 
-                        print('OpenOrder Price : ' + str(orderMatchedSELL['price']))
-                        print('Profit : ' + str(row))
+                        print('ราคาขาย : ' + str(orderMatchedSELL['price']))
+                        print('กำไร : ' + str(row['Profit']))
                         LineNotify(row['Profit'], 'change')
                         # บันทึก TradeLog
                         # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
@@ -150,6 +147,10 @@ def Trigger_trade():
                                                        , 'Zone': [str(row['Zone'])]
                                                        , 'OpenTime': [str(orderMatchedBUY['datetime'])]
                                                        , 'CloseTime': [str(orderMatchedSELL['datetime'])]
+                                                       , 'Profit': [str(row['Profit'])]
+                                                       , 'feeBuy': [str(row['feeBuy'])]
+                                                       , 'feeSell': [str(row['feeSell'])]
+
                                                     })
                         dfTradeLog1 = dfTradeLog1.append(dfTradeLog3, ignore_index=True)
 
@@ -162,6 +163,7 @@ def Trigger_trade():
                         row['timecancelsell'] = np.nan
                         row['ExposureBuy'] = np.nan
                         row['NAV'] = np.nan
+                        row['feeBuy'] = np.nan
 
                         # คืนสถานะ รูปแบบการเทรด เพื่อสุ่มใหม่
                         row['TradeTrigger'] = np.nan
@@ -170,6 +172,7 @@ def Trigger_trade():
                         row['IDorderSell'] = np.nan
                         row['ClosePrice'] = np.nan
                         row['AmountSell'] = np.nan
+                        row['feeSell'] = np.nan
 
                         dfTradeLogg = dfTradeLog1.drop(columns=[c for c in dfTradeLog1.columns if "Unnamed" in c]).dropna(how="all")
                         set_with_dataframe(gc.open("Data").worksheet('TradeLog'), dfTradeLogg)  # บันทึกชีทหน้า TradeLog
@@ -200,13 +203,23 @@ def Trigger_trade():
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 checktradesell = False
-                                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 90:
+                                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 40:
+                                    getRSIvalue = RSI('1m')
+                                    if getRSIvalue > 70:
+                                        print(getRSIvalue)
+                                        checktradesell = True
+                                if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                                     getRSIvalue = RSI('5m')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
                                         checktradesell = True
+                                if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
+                                    getRSIvalue = RSI('15m')
+                                    if getRSIvalue > 70:
+                                        print(getRSIvalue)
+                                        checktradesell = True
 
-                                if row['TradeTrigger'] >= 90:
+                                if row['TradeTrigger'] >= 91:
                                     getRSIvalue = RSI('1h')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
@@ -227,12 +240,31 @@ def Trigger_trade():
         if pd.isna(row['IDorderBuy']):
             if row['MapTrigger'] == 1 and row['Zone'] > 0 and row['Exposure'] > 0:  # MapTrigger = 1 คือ พื้นที่ๆ ควรมีกระสุน
                 checktradebuy = False
-                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 50:
+
+                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 20:
+                    getRSIvalue = RSI('1m')
+                    if getRSIvalue < 40:
+                        checktradebuy = True
+                if row['TradeTrigger'] >= 21 and row['TradeTrigger'] <= 40:
+                    getRSIvalue = RSI('1m')
+                    if getRSIvalue < 30:
+                        checktradebuy = True
+
+                if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 55:
                     getRSIvalue = RSI('5m')
                     if getRSIvalue < 40:
                         checktradebuy = True
-                if row['TradeTrigger'] >= 51 and row['TradeTrigger'] <= 90:
+                if row['TradeTrigger'] >= 56 and row['TradeTrigger'] <= 70:
                     getRSIvalue = RSI('5m')
+                    if getRSIvalue < 30:
+                        checktradebuy = True
+
+                if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 80:
+                    getRSIvalue = RSI('15m')
+                    if getRSIvalue < 40:
+                        checktradebuy = True
+                if row['TradeTrigger'] >= 81 and row['TradeTrigger'] <= 90:
+                    getRSIvalue = RSI('15m')
                     if getRSIvalue < 30:
                         checktradebuy = True
 
@@ -433,12 +465,19 @@ def RSI(timeframe):
 def Set_MapTrigger():
     NowPrice = getPrice(whatsymbol)
     df._set_value(whatsymbol, 'NowPrice', NowPrice)
+    MaxZone = df.loc[whatsymbol]['MaxZone']
+    MinZone = df.loc[whatsymbol]['MinZone']
+
     DifPrice = float(NowPrice) - float(MaxZone)
     if DifPrice < 0 : # BUY
         for i, row in dfMap.iterrows():
-            if NowPrice < row['Zone']:
+            if row['Zone'] >= MinZone and  row['Zone'] <= MaxZone:
+                row['UseZone'] = 1
+            elif row['Zone'] < MinZone or row['Zone'] > MaxZone:
+                row['UseZone'] = -1
+            if NowPrice < row['Zone'] and NowPrice > MinZone:
                 row['MapTrigger'] = 1
-            if NowPrice > row['Zone']:
+            elif NowPrice > row['Zone']:
                 row['MapTrigger'] = -1
             if pd.notna(row['Zone']):
                 if pd.isna(row['TradeTrigger']):
@@ -447,96 +486,37 @@ def Set_MapTrigger():
 
 
 ###### ----------Position   -----------###############
-def get_Expsoure_Position(tpyeEP):
+def set_Maninsheet():
     ExposureBuy = 0
     Position = 0
+    BulletHold = 0
+    UseZone = 0
     for i, row in dfMap.iterrows():
+        # ---- ดู Exposure ที่ถือครองอยู่
         if row['ExposureBuy'] > 0:
             countExposure = row['ExposureBuy']
             ExposureBuy = ExposureBuy + countExposure
+            df._set_value(whatsymbol, 'ExposureSize', ExposureBuy)
+        # ---- ดู จำนวนกระสุนที่สามารถใช้ได้ในโซนที่กำหนด
+        if row['UseZone'] == 1:
+            UseZone = UseZone + 1
+            df._set_value(whatsymbol, 'BulletLimit', UseZone)
         if row['FilledBuy'] > 0:
+            # ---- ดู ขนาด Position ที่ถือครองอยู่
             countPosition = row['FilledBuy']
             Position = Position + countPosition
-    if tpyeEP == 'Expsoure':
-        return ExposureBuy
-    if tpyeEP == 'Position':
-        return Position
-
-
-
-def get_BulletHold():
-    BulletHold = 0
-    for i, row in dfMap.iterrows():
-        if row['FilledBuy'] > 0:
-            BulletHold = BulletHold +1
-    return BulletHold
-
-def Update_NAV():
-    for i, row in dfMap.iterrows():
+            df._set_value(whatsymbol, 'PositionSize', Position)
+            # ---- ดู จำนวนกระสุน ที่ถือครองอยู่
+            BulletHold = BulletHold + 1
+            df._set_value(whatsymbol, 'BulletHold', BulletHold)
+        # ---- ดู NAV กระสุนแต่ล่ะนัด
         if row['FilledBuy'] !=0 and  pd.notna(row['FilledBuy']):
             Exposurediff = row['FilledBuy'] * getPrice(whatsymbol)
             NAV = Exposurediff - row['ExposureBuy']
             row['NAV'] = NAV
-
-
-
-
-### ----- ฟังก์ชั่นเก่าไม่ใช้งาน ไม่มีผลกับโปรแกรม XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-def LoadMap():
-    # Load MapBuy
-    Exposure = 1
-    RangMap = 10
-    dfMapBuy = pd.DataFrame({'Zone': [], 'Exposure': []})
-    for i in range(RangMap):
-        Price = difZone * i
-        Zone = MaxZone + Price
-
-    dfMapBuy = dfMapBuy.append({'Zone': Zone, 'Exposure': Exposure}, ignore_index=True)
-    set_with_dataframe(gc.open("Data").worksheet('SetMap'), dfMapBuy)
-
-def tradeFunction():
-    ExposureRerate = df.loc[whatsymbol]['ExposureRerate']
-    ExposureRerate = float(ExposureRerate)
-    Price = getPrice(whatsymbol)
-    DifPercent = abs(ExposureRerate - Price) / (ExposureRerate / 100)
-    minPercent = 0.5
-    oderinfo = OHLC(whatsymbol,168)
-    oderinfo['Percent_Change'] = ((oderinfo['high'] - oderinfo['low']) / (oderinfo['low'] / 100))
-    mean1hr168 = oderinfo["Percent_Change"].mean()
-    minPercentToAdjust = (float(ExposureRerate) / 100) * float(minPercent)  # ตรวจดูว่า เกิน 0.5%ยัง
-    if mean1hr168 > minPercentToAdjust:
-        if DifPercent > mean1hr168:
-            return True  # เข้าเงื่อนไขจริง
-    else:
-        return False #https://stackoverflow.com/questions/19498572/why-do-i-get-none-instead-of-true-false-in-python
-
-def orderFilled(Multiply): #เช็คดว่า แมต ยังหรือยัง # ต้นทางเช็คมาแล้วว่า ID ไม่ว่าง แสดงว่ามีการตั้ง Pending ออเดอร์
-    global df
-    id = df.loc[whatsymbol]['IDorder']
-    orderMatched = checkByIDoder(id)
-    if orderMatched['filled'] > 0:  # เช็ค Matched ไหม # ถ้ามากกว่า 0 แสดงว่า ลิมิตออเดอร์ แมต แล้ว..
-        # เติมข้อมูล ออเดอร์ที่แมตแล้ว พร้อมคำนวณ exposure
-        PositionSize = orderMatched['filled'] * orderMatched['price']
-        if orderMatched['side'] == 'buy':
-            PositionSize = PositionSize * (-1)
-        ExposureReal = df.loc[0.1]['ExposureReal'] + PositionSize
-        exposureRerate = ExposureReal / float(Multiply)
-        df._set_value(0.1, 'ExposureReal', ExposureReal)
-        df._set_value(0.1, 'ExposureRerate', exposureRerate)
-
-        # ตั้งดีเลย์สำหรับการเทรดครั้งถัดไป
-        BulletHold = df.loc[whatsymbol]['BulletHold']
-        Trigger = df.loc[whatsymbol]['Trigger']
-        if Trigger == BulletHold:
-            df = TimeDelayForNextTrade()
-            LineNotify('change')
-
-    else:
-        if orderMatched['type'] == 'limit':
-            # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
-            first_time = df.loc[whatsymbol]['Timer']
-            start_time = first_time + 600  # นับถอยหลัง 10 นาที เพื่อยกเลิกออเดอร์
-            target_time = time.time()
-            timeElapsed = target_time - start_time
-            if timeElapsed > 0:
-                cancelOrder(id)
+    TotalBalance = df.loc[whatsymbol]['TotalBalance']
+    BulletLimit = df.loc[whatsymbol]['BulletLimit']
+    avgExposurePerBullet = TotalBalance / BulletLimit
+    df._set_value(whatsymbol, 'avgExposurePerBullet', avgExposurePerBullet)
+    df._set_value(whatsymbol, 'Balance', get_balance(Balance))
+    df._set_value(whatsymbol, 'DifZone', FindDiffZone())
