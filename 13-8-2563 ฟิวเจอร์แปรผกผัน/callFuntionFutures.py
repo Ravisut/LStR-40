@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**********',
-        'secret': '***********',
+        'apiKey': '**************',
+        'secret': '***************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -74,7 +74,6 @@ def updatee():
 
 def Trigger_trade():
     dfTradeLog1 = dfTradeLog
-    Multiply = df.loc[whatsymbol]['Leverage']
     difZone = df.loc[whatsymbol]['DifZone']
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
@@ -281,8 +280,8 @@ def Trigger_trade():
                         #df._set_value(whatsymbol, 'Stat', 'Cooldown')
 
                 if checktradebuy == True :
-                    # คูณเลเวอเรจ
-                    expousre = row['Exposure'] * Multiply
+                    # ต้นทุนกระสุนต่อนัด
+                    expousre = row['Exposure']
                     # ปริมาณสินค้าที่จะตั้งออเดอร์ ต่อ กระสุน 1นัด
                     amount = abs(expousre) / float(getPrice(whatsymbol))
 
