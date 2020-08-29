@@ -16,7 +16,7 @@ while True:
         timeEnd = time.time()
         timeElapsed = timeEnd - timeBegin
         print('เวลา'+str(datetime.datetime.now().strftime('%H:%M'))+' กระบวนการ 1 รอบใช้เวลา: '+str(int(timeElapsed))+' วินาที')
-        # จบกระบวนการทั้งหมดใน callFuntionFutures ใช้ 37 วิ แล้วเอา 60 - 37 = 23วิ ที่เหลือในการถ่วงเวลา
+        # จบกระบวนการทั้งหมดใน callFuntionFutures ใช้ 37-51 วิ แล้วเอา 60 - 37 = 23วิ ที่เหลือในการถ่วงเวลา
         # ทำให้ หน่วงเวลา 30 วิไม่ได้ เพราะ 1รอบใช้เวลา 37วิ และ กระบวนการห้ามนานเกิน 60วิ
         time.sleep(60 - timeElapsed)  # ถ่วงเวลา 60  วินาที
 
@@ -40,12 +40,16 @@ while True:
     except Exception as e:
         # panic and halt the execution in case of any other error
         print(type(e).__name__, str(e))
-        time.sleep(30)  # 30 sec.
-        checkError = checkError+1
-        # error เกิน 3 รอบให้หยุดโปรแกรม
-        if checkError == 3:
-            callFuntionFutures.LineNotify(e, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
-            break
-            # sys.exit()
+        if 'ValueError sleep length must be non-negative' == str(e):
+            time.sleep(30)  # 30 sec.
+        else:
+            time.sleep(30)  # 30 sec.
+            checkError = checkError + 1
+            # error เกิน 3 รอบให้หยุดโปรแกรม
+            if checkError == 3:
+                callFuntionFutures.LineNotify(e, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
+                break
+                # sys.exit()
+
 
 

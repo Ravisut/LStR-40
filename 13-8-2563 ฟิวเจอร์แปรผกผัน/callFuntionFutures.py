@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**************',
-        'secret': '***************',
+        'apiKey': '**********',
+        'secret': '**********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -116,15 +116,15 @@ def Trigger_trade():
                     orderMatchedSELL = checkByIDoder(idOrdersell)
                     # sell filled ทั้งหมด แสดงว่าปิด กำไร ได้
                     if orderMatchedSELL['filled'] == orderMatchedSELL['amount']:
+                        row['LastClosePrice'] = row['ClosePrice']
+                        row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedSELL['side'])  # fee
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
-                        row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedSELL['side'])  # fee
-                        row['LastClosePrice'] = row['ClosePrice']
 
                         if pd.isna(row['Profit']):
-                            row['Profit'] = ExposureSell - ExposureBuy
+                            row['Profit'] = (ExposureSell - ExposureBuy) - (row['feeSell'] + row['feeBuy'])
                         elif pd.notna(row['round']):
-                            row['Profit'] = row['Profit'] + (ExposureSell - ExposureBuy)
+                            row['Profit'] = row['Profit'] + ((ExposureSell - ExposureBuy) - (row['feeSell'] + row['feeBuy']))
 
                         if pd.isna(row['round']):
                             row['round'] = 1
