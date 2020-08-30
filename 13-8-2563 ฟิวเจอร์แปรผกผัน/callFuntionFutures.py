@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**********',
-        'secret': '***********',
+        'apiKey': '**************',
+        'secret': '**************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -116,7 +116,7 @@ def Trigger_trade():
                     orderMatchedSELL = checkByIDoder(idOrdersell)
                     # sell filled ทั้งหมด แสดงว่าปิด กำไร ได้
                     if orderMatchedSELL['filled'] == orderMatchedSELL['amount']:
-                        row['LastClosePrice'] = row['ClosePrice']
+                        row['LastClosePrice'] = orderMatchedSELL['price']
                         row['feeSell'] = Getfee_ByIDoderinMyTrades(idOrdersell, orderMatchedSELL['side'])  # fee
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
@@ -135,7 +135,7 @@ def Trigger_trade():
 
                         print('ราคาขาย : ' + str(orderMatchedSELL['price']))
                         print('กำไร : ' + str(profitshow))
-                        LineNotify(row['Profit'], 'change')
+                        LineNotify(profitshow, 'change')
                         # บันทึก TradeLog
                         # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
                         # กำหนด PD ก่อน
