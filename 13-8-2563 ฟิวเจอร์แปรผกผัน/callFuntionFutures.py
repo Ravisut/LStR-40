@@ -26,7 +26,7 @@ whatsymbol = "XRP-PERP"
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
         'apiKey': '**********',
-        'secret': '**********',
+        'secret': '***********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -121,10 +121,12 @@ def Trigger_trade():
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
 
+                        profitshow = (ExposureSell - ExposureBuy) - (row['feeSell'] + row['feeBuy'])
+
                         if pd.isna(row['Profit']):
-                            row['Profit'] = (ExposureSell - ExposureBuy) - (row['feeSell'] + row['feeBuy'])
-                        elif pd.notna(row['round']):
-                            row['Profit'] = row['Profit'] + ((ExposureSell - ExposureBuy) - (row['feeSell'] + row['feeBuy']))
+                            row['Profit'] = profitshow
+                        elif pd.notna(row['Profit']):
+                            row['Profit'] = row['Profit'] + profitshow
 
                         if pd.isna(row['round']):
                             row['round'] = 1
@@ -132,7 +134,7 @@ def Trigger_trade():
                             row['round'] = row['round'] + 1
 
                         print('ราคาขาย : ' + str(orderMatchedSELL['price']))
-                        print('กำไร : ' + str(row['Profit']))
+                        print('กำไร : ' + str(profitshow))
                         LineNotify(row['Profit'], 'change')
                         # บันทึก TradeLog
                         # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
@@ -146,7 +148,7 @@ def Trigger_trade():
                                                        , 'Zone': [str(row['Zone'])]
                                                        , 'OpenTime': [str(orderMatchedBUY['datetime'])]
                                                        , 'CloseTime': [str(orderMatchedSELL['datetime'])]
-                                                       , 'Profit': [str(row['Profit'])]
+                                                       , 'Profit': [str(profitshow)]
                                                        , 'feeBuy': [str(row['feeBuy'])]
                                                        , 'feeSell': [str(row['feeSell'])]
 
