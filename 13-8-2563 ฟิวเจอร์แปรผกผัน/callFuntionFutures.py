@@ -200,27 +200,50 @@ def Trigger_trade():
                 if pd.isna(row['IDorderSell']):
                     NowPrice = getPrice(whatsymbol)
                     if pd.notna(row['OpenPrice']):
-                        if NowPrice > (row['OpenPrice'] + (difZone*2)):  # ต้องมากกว่า อย่างน้อย 2 โซน ถึงจะปิดกำไรได้
+                        if NowPrice > (row['OpenPrice'] + difZone):  # ต้องมากกว่า อย่างน้อย 1 โซน ถึงจะปิดกำไรได้
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 checktradesell = False
-                                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 40:
+
+                                if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 20:
+                                    getRSIvalue = RSI('1m')
+                                    if getRSIvalue > 60:
+                                        print(getRSIvalue)
+                                        checktradesell = True
+                                if row['TradeTrigger'] >= 21 and row['TradeTrigger'] <= 40:
                                     getRSIvalue = RSI('1m')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
                                         checktradesell = True
-                                if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
+
+                                if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 55:
+                                    getRSIvalue = RSI('5m')
+                                    if getRSIvalue > 60:
+                                        print(getRSIvalue)
+                                        checktradesell = True
+                                if row['TradeTrigger'] >= 56 and row['TradeTrigger'] <= 70:
                                     getRSIvalue = RSI('5m')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
                                         checktradesell = True
-                                if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
+
+                                if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 80:
+                                    getRSIvalue = RSI('15m')
+                                    if getRSIvalue > 60:
+                                        print(getRSIvalue)
+                                        checktradesell = True
+                                if row['TradeTrigger'] >= 81 and row['TradeTrigger'] <= 90:
                                     getRSIvalue = RSI('15m')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
                                         checktradesell = True
 
-                                if row['TradeTrigger'] >= 91:
+                                if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 95:
+                                    getRSIvalue = RSI('1h')
+                                    if getRSIvalue > 60:
+                                        print(getRSIvalue)
+                                        checktradesell = True
+                                if row['TradeTrigger'] >= 96:
                                     getRSIvalue = RSI('1h')
                                     if getRSIvalue > 70:
                                         print(getRSIvalue)
@@ -273,7 +296,7 @@ def Trigger_trade():
                     getRSIvalue = RSI('1h')
                     if getRSIvalue < 40:
                         checktradebuy = True
-                if row['TradeTrigger'] >= 96 and row['TradeTrigger'] <= 100:
+                if row['TradeTrigger'] >= 96:
                     getRSIvalue = RSI('1h')
                     if getRSIvalue < 30:
                         checktradebuy = True
