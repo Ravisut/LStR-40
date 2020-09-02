@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**************',
-        'secret': '**************',
+        'apiKey': '******',
+        'secret': '*******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -135,7 +135,16 @@ def Trigger_trade():
 
                         print('ราคาขาย : ' + str(orderMatchedSELL['price']))
                         print('กำไร : ' + str(profitshow))
-                        LineNotify(profitshow, 'change')
+                        LineNotify('ราคาขาย : ' + str(orderMatchedSELL['price']) +'\n'+ 'กำไร : ' + str(profitshow), 'change')
+                        if pd.isna(profitshow):
+                            LineNotify(
+                                'บัค nan ExposureSell : ' + str(ExposureSell) + '\n' +
+                                'บัค nan ExposureBuy : ' + str(ExposureBuy) + '\n' +
+                                'บัค nan feeSell : ' + str(row['feeSell']) + '\n' +
+                                'บัค nan feeBuy : ' + str(row['feeBuy'])
+                                ,'change')
+
+
                         # บันทึก TradeLog
                         # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
                         # กำหนด PD ก่อน
@@ -422,7 +431,7 @@ def LineNotify(mse,typee):
 
     if typee == 'change':
         mse = str(mse)
-        msg = 'Profit : '+ mse
+        msg = mse
         r = requests.post(url, headers=headers, data={'message': msg})
         print(r.text)
     if typee == 'error' :
