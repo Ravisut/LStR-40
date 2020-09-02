@@ -25,8 +25,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'ForTest'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '******',
-        'secret': '*******',
+        'apiKey': ---------',
+        'secret': '---------',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -121,7 +121,14 @@ def Trigger_trade():
                         ExposureBuy = row['ExposureBuy']
                         ExposureSell = orderMatchedSELL['filled'] * orderMatchedSELL['price']
 
-                        profitshow = (ExposureSell - ExposureBuy) - (row['feeSell'] + row['feeBuy'])
+                        feesell = row['feeSell']
+                        feebuy = row['feeBuy']
+                        if pd.isna(feesell):
+                            feesell = 0
+                        if pd.isna(feebuy):
+                            feebuy = 0
+
+                        profitshow = (ExposureSell - ExposureBuy) - (feesell + feebuy)
 
                         if pd.isna(row['Profit']):
                             row['Profit'] = profitshow
