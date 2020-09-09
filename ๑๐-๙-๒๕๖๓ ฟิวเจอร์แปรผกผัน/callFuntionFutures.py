@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*********',
-        'secret': '**********',
+        'apiKey': '************',
+        'secret': '*************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -83,11 +83,10 @@ def updatee():
                                  columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
                                           'unrealizedPnl', 'realizedPnl'])
     print(df_curr_trade)
-    r1 = json.dumps(exchange.fetch_ticker(whatsymbol))
-    market_price = json.loads(r1)
-    print("market_price: " + str(market_price['last']))
+    print("market_price: " + str(getPrice(whatsymbol)))
 
 def Trigger_trade():
+    NowPrice = getPrice(whatsymbol)
     difZone = df.loc[whatsymbol]['DifZone']
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
@@ -230,7 +229,6 @@ def Trigger_trade():
 
                 # เงื่อนไข ยิงกระสุน sell
                 if pd.isna(row['IDorderSell']):
-                    NowPrice = getPrice(whatsymbol)
                     if pd.notna(row['OpenPrice']):
                         if NowPrice > (row['OpenPrice'] + (difZone*2)):  # ต้องมากกว่า อย่างน้อย 2 โซน ถึงจะปิดกำไรได้
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
@@ -261,11 +259,10 @@ def Trigger_trade():
                                             print(getRSIvalue)
                                             checktradesell = True
                                 if tradeFuntion == 'percent':
-                                    pricenow = getPrice(whatsymbol)
                                     Openprice_ = row['OpenPrice']
                                     minpercenttore = Openprice_ / 100
                                     Closeprice_ = Openprice_ + minpercenttore
-                                    if pricenow > Closeprice_:
+                                    if NowPrice > Closeprice_:
                                         checktradesell = True
 
                                 if checktradesell == True:
@@ -309,15 +306,14 @@ def Trigger_trade():
                             # df._set_value(whatsymbol, 'Stat', 'Cooldown')
 
                 if tradeFuntion == 'percent':
-                    pricenow = getPrice(whatsymbol)
-                    if pricenow < row['Zone']:
+                    if NowPrice < row['Zone']:
                         checktradebuy = True
 
                 if checktradebuy == True :
                     # ต้นทุนกระสุนต่อนัด
                     expousre = row['Exposure']
                     # ปริมาณสินค้าที่จะตั้งออเดอร์ ต่อ กระสุน 1นัด
-                    amount = abs(expousre) / float(getPrice(whatsymbol))
+                    amount = abs(expousre) / float(NowPrice)
 
                     orderBuy = re(whatsymbol, 'limit', 'buy', amount)
 
