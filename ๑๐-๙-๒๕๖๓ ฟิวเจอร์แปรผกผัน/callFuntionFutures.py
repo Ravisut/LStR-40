@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '************',
-        'secret': '*************',
+        'apiKey': '**********',
+        'secret': '***********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -83,10 +83,11 @@ def updatee():
                                  columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
                                           'unrealizedPnl', 'realizedPnl'])
     print(df_curr_trade)
-    print("market_price: " + str(getPrice(whatsymbol)))
+
 
 def Trigger_trade():
     NowPrice = getPrice(whatsymbol)
+    print("market_price: " + str(NowPrice))
     difZone = df.loc[whatsymbol]['DifZone']
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
@@ -269,7 +270,7 @@ def Trigger_trade():
                                     positionSizeClose = row['FilledBuy']
 
                                     # เปิดออเดอร์ Sell เพื่อปิดออเดอร์ Buy
-                                    orderSell = re(whatsymbol, 'limit', 'sell', positionSizeClose)
+                                    orderSell = re(whatsymbol, 'limit', 'sell', positionSizeClose,NowPrice)
 
                                     row['IDorderSell'] = orderSell['id']
                                     row['ClosePrice'] = orderSell['price']
@@ -315,7 +316,7 @@ def Trigger_trade():
                     # ปริมาณสินค้าที่จะตั้งออเดอร์ ต่อ กระสุน 1นัด
                     amount = abs(expousre) / float(NowPrice)
 
-                    orderBuy = re(whatsymbol, 'limit', 'buy', amount)
+                    orderBuy = re(whatsymbol, 'limit', 'buy', amount,NowPrice)
 
                     row['IDorderBuy'] = orderBuy['id']
                     row['OpenPrice'] = orderBuy['price']
@@ -323,9 +324,9 @@ def Trigger_trade():
                     row['ExposureBuy'] = orderBuy['amount'] * orderBuy['price']
                     row['timecancelbuy'] = time.time()
 
-def re(symbol,types,side,amount):
+def re(symbol,types,side,amount,nowprice):
     #types = 'limit'  # 'limit' or 'market'
-    order = exchange.create_order(symbol, types, side, amount,getPrice(whatsymbol))
+    order = exchange.create_order(symbol, types, side, amount,nowprice)
     #print(order)
     return order
 
