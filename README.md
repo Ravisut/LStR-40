@@ -16,7 +16,10 @@
 29/8/2563 เพิ่มเงื่อนไขการเทรดด้วย RSI14 มี 8รูปแบบ 1,5,15นาที,1ชั่วโมง -เก็บรอบต่อนัด -กำไรสะสมต่อนัด
 
 10/9/2563 แก้ปัญหาเรื่องโหลดนาน เพราะ ใช้คำสั่งเรียกดูไอดีออเดอร์จาก FTX บ่อยเกินไปเลย จึงใช้เฉพาะกรณีดูว่า Position ที่ยิงลิมิตไปแมตซ์  filled  หรือยัง และยกเลิกกรณีเกินเวลาแล้ว เท่านั้น
-ชีททดสอบ
+
+ชีททดสอบ บอทตัวที่ 1
 https://docs.google.com/spreadsheets/d/1gw0D_n9PSgoyXZYCN35xAykNTARL-WPqR0iKpFpkh00
+ชีททดสอบ บอทตัวที่ 2
+https://docs.google.com/spreadsheets/d/1QjcWwGd8ddlxtg8wiJ05ylY2iiieRULLCBj1_60r8y4/edit?usp=sharing
 
 วิธีเชื่อมต่อ API กับ Google sheet https://medium.com/@ravisutkanit
