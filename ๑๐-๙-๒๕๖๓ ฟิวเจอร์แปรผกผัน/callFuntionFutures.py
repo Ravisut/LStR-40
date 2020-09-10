@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**********',
-        'secret': '***********',
+        'apiKey': '************',
+        'secret': '************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -236,29 +236,36 @@ def Trigger_trade():
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 checktradesell = False
                                 if tradeFuntion == 'RSI':
-                                    if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 25:
+                                    if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 40:
+                                        getRSIvalue = RSI('1m')
+                                        if getRSIvalue > 70:
+                                            print(getRSIvalue)
+                                            checktradesell = True
+
+                                    if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                                         getRSIvalue = RSI('5m')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 26 and row['TradeTrigger'] <= 50:
+                                    if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
                                         getRSIvalue = RSI('15m')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 51 and row['TradeTrigger'] <= 75:
+                                    if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 97:
                                         getRSIvalue = RSI('1h')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 76:
+                                    if row['TradeTrigger'] >= 98:
                                         getRSIvalue = RSI('4h')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
+
                                 if tradeFuntion == 'percent':
                                     Openprice_ = row['OpenPrice']
                                     minpercenttore = Openprice_ / 100
@@ -283,22 +290,26 @@ def Trigger_trade():
                 checktradebuy = False
 
                 if tradeFuntion == 'RSI':
-                    if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 25:
+                    if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 40:
+                        getRSIvalue = RSI('1m')
+                        if getRSIvalue < 30:
+                            checktradebuy = True
+                    if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                         getRSIvalue = RSI('5m')
                         if getRSIvalue < 30:
                             checktradebuy = True
 
-                    if row['TradeTrigger'] >= 26 and row['TradeTrigger'] <= 50:
+                    if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
                         getRSIvalue = RSI('15m')
                         if getRSIvalue < 30:
                             checktradebuy = True
 
-                    if row['TradeTrigger'] >= 51 and row['TradeTrigger'] <= 75:
+                    if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 97:
                         getRSIvalue = RSI('1h')
                         if getRSIvalue < 30:
                             checktradebuy = True
 
-                    if row['TradeTrigger'] >= 76:
+                    if row['TradeTrigger'] >= 98:
                         getRSIvalue = RSI('4h')
                         if getRSIvalue < 30:
                             checktradebuy = True
@@ -421,7 +432,7 @@ def LineNotify(mse,typee):
     # แจ้งเตือนผ่านไลน์เมื อเกิดการรีบาลานซ์
     # ที่มา https://jackrobotics.me/line-notify-%E0%B8%94%E0%B9%89%E0%B8%A7%E0%B8%A2-python-fbab52d1549
     url = 'https://notify-api.line.me/api/notify'
-    token = 'U2AKKyAxYaf3Iq8FUpAVt8yLLTMZZXkv0X9IBO5q4MX'
+    token = 'MQaK3NTRG0gtC4PS2pQYiJvKC44J4prFY3hAcgzZ8EE'
     headers = {'content-type': 'application/x-www-form-urlencoded', 'Authorization': 'Bearer ' + token}
 
     if typee == 'change':
