@@ -14,7 +14,7 @@ scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/aut
 creds = ServiceAccountCredentials.from_json_keyfile_name("API.json", scope)
 gc = gspread.authorize(creds)
 
-sheetname = 'Data'
+sheetname = 'Data2'
 
 # เรียกข้อมูลใน google sheet และตั้งให้ คอลัม Product เป็น index ไว้ให้ pandas เรียกใช้
 df = get_as_dataframe(gc.open(sheetname).worksheet('Monitor') ).set_index('Product')
@@ -26,10 +26,10 @@ tradeFuntion = 'RSI'
 Balance = 'USD'
 whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
-subaccount = 'Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
+subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**************************',
-        'secret': '**************************',
+        'apiKey': '************',
+        'secret': '*************',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -449,10 +449,10 @@ def LineNotify(mse,typee):
 def RSI(timeframe):
     # ที่มา https://stackoverflow.com/questions/20526414/relative-strength-index-in-python-pandas
     # Window length for moving average
-    window_length = 14
+    window_length = 7
 
     # Get price XRP
-    datainfo = OHLC("XRP-PERP", 100,timeframe)
+    datainfo = OHLC("XRP-PERP", 21,timeframe)
 
     # Get just the  close
     close = datainfo['close']
