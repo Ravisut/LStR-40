@@ -14,7 +14,7 @@ scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/aut
 creds = ServiceAccountCredentials.from_json_keyfile_name("API.json", scope)
 gc = gspread.authorize(creds)
 
-sheetname = 'Data2'
+sheetname = 'Data'
 
 # เรียกข้อมูลใน google sheet และตั้งให้ คอลัม Product เป็น index ไว้ให้ pandas เรียกใช้
 df = get_as_dataframe(gc.open(sheetname).worksheet('Monitor') ).set_index('Product')
@@ -26,10 +26,10 @@ tradeFuntion = 'RSI'
 Balance = 'USD'
 whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
-subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
+subaccount = 'Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '************',
-        'secret': '************',
+        'apiKey': '**************************',
+        'secret': '**************************',
         'enableRateLimit': True,
     })
 if subaccount == "":
