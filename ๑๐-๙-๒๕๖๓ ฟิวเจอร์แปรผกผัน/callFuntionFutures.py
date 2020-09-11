@@ -43,10 +43,8 @@ else:
 
 
 def updatee():
-    # ----- ตั้งค่า Map ว่าแต่ล่ะโซนควรมีกระสุนหรือไม่-----
+    # ----- ตั้งค่า Map ว่าแต่ล่ะโซนควรมีกระสุนหรือไม่----- # ----- ส่วนแสดงผลในหน้า Monitor --------
     Set_MapTrigger()
-    # ----- ส่วนแสดงผลในหน้า Monitor --------
-    set_Maninsheet()
 
     if df.loc[whatsymbol]['Stat'] == 'Cooldown':
         TimerDelay = df.loc[whatsymbol]['TimerDelay']
@@ -432,7 +430,7 @@ def LineNotify(mse,typee):
     # แจ้งเตือนผ่านไลน์เมื อเกิดการรีบาลานซ์
     # ที่มา https://jackrobotics.me/line-notify-%E0%B8%94%E0%B9%89%E0%B8%A7%E0%B8%A2-python-fbab52d1549
     url = 'https://notify-api.line.me/api/notify'
-    token = 'MQaK3NTRG0gtC4PS2pQYiJvKC44J4prFY3hAcgzZ8EE'
+    token = 'U2AKKyAxYaf3Iq8FUpAVt8yLLTMZZXkv0X9IBO5q4MX'
     headers = {'content-type': 'application/x-www-form-urlencoded', 'Authorization': 'Bearer ' + token}
 
     if typee == 'change':
@@ -500,14 +498,19 @@ def RSI(timeframe):
     # plt.show()
 
 
-###### ---------- Map   -----------###############
 def Set_MapTrigger():
+    ###### ----------Position   -----------###############
+    ExposureBuy = 0
+    Position = 0
+    BulletHold = 0
+    UseZone = 0
+
+    ###### ---------- Map   -----------###############
     NowPrice = getPrice(whatsymbol)
     df._set_value(whatsymbol, 'NowPrice', NowPrice)
     MaxZone = df.loc[whatsymbol]['MaxZone']
     MinZone = df.loc[whatsymbol]['MinZone']
     MaxLimitZone = 0.4
-
     DifPrice = float(NowPrice) - float(MaxLimitZone)
     # หรือ NowPrice < MaxLimitZone
     if DifPrice < 0 : # BUY
@@ -524,40 +527,31 @@ def Set_MapTrigger():
                 if pd.isna(row['TradeTrigger']):
                     # ---- เลือกว่าจะเทรดด้วยเงื่อนไขอะไรโดยการสุ่ม 3 ทามเฟรม 6 รูปแบบ
                     row['TradeTrigger'] = random.randint(1, 100)
-
-
-###### ----------Position   -----------###############
-def set_Maninsheet():
-    ExposureBuy = 0
-    Position = 0
-    BulletHold = 0
-    UseZone = 0
-    for i, row in dfMap.iterrows():
-        # ---- ดู Exposure ที่ถือครองอยู่
-        if row['ExposureBuy'] > 0:
-            countExposure = row['ExposureBuy']
-            ExposureBuy = ExposureBuy + countExposure
-            df._set_value(whatsymbol, 'ExposureSize', ExposureBuy)
-        # ---- ดู จำนวนกระสุนที่สามารถใช้ได้ในโซนที่กำหนด
-        if row['UseZone'] == 1:
-            UseZone = UseZone + 1
-            df._set_value(whatsymbol, 'BulletLimit', UseZone)
-        if row['FilledBuy'] > 0:
-            # ---- ดู ขนาด Position ที่ถือครองอยู่
-            countPosition = row['FilledBuy']
-            Position = Position + countPosition
-            df._set_value(whatsymbol, 'PositionSize', Position)
-            # ---- ดู จำนวนกระสุน ที่ถือครองอยู่
-            BulletHold = BulletHold + 1
-            df._set_value(whatsymbol, 'BulletHold', BulletHold)
-        # ---- ดู NAV กระสุนแต่ล่ะนัด
-        if row['FilledBuy'] !=0 and  pd.notna(row['FilledBuy']):
-            Exposurediff = row['FilledBuy'] * getPrice(whatsymbol)
-            NAV = Exposurediff - row['ExposureBuy']
-            row['NAV'] = NAV
-    TotalBalance = df.loc[whatsymbol]['TotalBalance']
-    BulletLimit = df.loc[whatsymbol]['BulletLimit']
-    avgExposurePerBullet = TotalBalance / BulletLimit
-    df._set_value(whatsymbol, 'avgExposurePerBullet', avgExposurePerBullet)
-    df._set_value(whatsymbol, 'Balance', get_balance(Balance))
-    df._set_value(whatsymbol, 'DifZone', FindDiffZone())
+            # ---- ดู Exposure ที่ถือครองอยู่
+            if row['ExposureBuy'] > 0:
+                countExposure = row['ExposureBuy']
+                ExposureBuy = ExposureBuy + countExposure
+                df._set_value(whatsymbol, 'ExposureSize', ExposureBuy)
+            # ---- ดู จำนวนกระสุนที่สามารถใช้ได้ในโซนที่กำหนด
+            if row['UseZone'] == 1:
+                UseZone = UseZone + 1
+                df._set_value(whatsymbol, 'BulletLimit', UseZone)
+            if row['FilledBuy'] > 0:
+                # ---- ดู ขนาด Position ที่ถือครองอยู่
+                countPosition = row['FilledBuy']
+                Position = Position + countPosition
+                df._set_value(whatsymbol, 'PositionSize', Position)
+                # ---- ดู จำนวนกระสุน ที่ถือครองอยู่
+                BulletHold = BulletHold + 1
+                df._set_value(whatsymbol, 'BulletHold', BulletHold)
+            # ---- ดู NAV กระสุนแต่ล่ะนัด
+            if row['FilledBuy'] != 0 and pd.notna(row['FilledBuy']):
+                Exposurediff = row['FilledBuy'] * getPrice(whatsymbol)
+                NAV = Exposurediff - row['ExposureBuy']
+                row['NAV'] = NAV
+        TotalBalance = df.loc[whatsymbol]['TotalBalance']
+        BulletLimit = df.loc[whatsymbol]['BulletLimit']
+        avgExposurePerBullet = TotalBalance / BulletLimit
+        df._set_value(whatsymbol, 'avgExposurePerBullet', avgExposurePerBullet)
+        df._set_value(whatsymbol, 'Balance', get_balance(Balance))
+        df._set_value(whatsymbol, 'DifZone', FindDiffZone())
