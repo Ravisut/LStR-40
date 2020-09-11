@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '************',
-        'secret': '*************',
+        'apiKey': '*********',
+        'secret': '*********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -546,7 +546,7 @@ def Set_MapTrigger():
                 df._set_value(whatsymbol, 'BulletHold', BulletHold)
             # ---- ดู NAV กระสุนแต่ล่ะนัด
             if row['FilledBuy'] != 0 and pd.notna(row['FilledBuy']):
-                Exposurediff = row['FilledBuy'] * getPrice(whatsymbol)
+                Exposurediff = row['FilledBuy'] * NowPrice
                 NAV = Exposurediff - row['ExposureBuy']
                 row['NAV'] = NAV
         TotalBalance = df.loc[whatsymbol]['TotalBalance']
