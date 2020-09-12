@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*********',
-        'secret': '*********',
+        'apiKey': '**********',
+        'secret': '***********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -43,8 +43,9 @@ else:
 
 
 def updatee():
+    NowPrice = getPrice(whatsymbol)
     # ----- ตั้งค่า Map ว่าแต่ล่ะโซนควรมีกระสุนหรือไม่----- # ----- ส่วนแสดงผลในหน้า Monitor --------
-    Set_MapTrigger()
+    Set_MapTrigger(NowPrice)
 
     if df.loc[whatsymbol]['Stat'] == 'Cooldown':
         TimerDelay = df.loc[whatsymbol]['TimerDelay']
@@ -61,7 +62,7 @@ def updatee():
             df._set_value(whatsymbol, 'CooldownTime', np.nan)
     if df.loc[whatsymbol]['Stat'] != 'Cooldown':
         # ----- ดูว่าเข้าเงื่อนไขเทรดยัง
-        Trigger_trade()
+        Trigger_trade(NowPrice)
 
     # บันทึก Google shhet
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
@@ -81,11 +82,10 @@ def updatee():
                                  columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
                                           'unrealizedPnl', 'realizedPnl'])
     print(df_curr_trade)
-
-
-def Trigger_trade():
-    NowPrice = getPrice(whatsymbol)
     print("market_price: " + str(NowPrice))
+
+
+def Trigger_trade(NowPrice):
     difZone = df.loc[whatsymbol]['DifZone']
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
@@ -235,30 +235,24 @@ def Trigger_trade():
                                 checktradesell = False
                                 if tradeFuntion == 'RSI':
                                     if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 40:
-                                        getRSIvalue = RSI('1m')
-                                        if getRSIvalue > 70:
-                                            print(getRSIvalue)
-                                            checktradesell = True
-
-                                    if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                                         getRSIvalue = RSI('5m')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
+                                    if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                                         getRSIvalue = RSI('15m')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 97:
+                                    if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
                                         getRSIvalue = RSI('1h')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 98:
+                                    if row['TradeTrigger'] >= 91:
                                         getRSIvalue = RSI('4h')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
@@ -289,25 +283,20 @@ def Trigger_trade():
 
                 if tradeFuntion == 'RSI':
                     if row['TradeTrigger'] >= 1 and row['TradeTrigger'] <= 40:
-                        getRSIvalue = RSI('1m')
-                        if getRSIvalue < 30:
-                            checktradebuy = True
-                    if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                         getRSIvalue = RSI('5m')
                         if getRSIvalue < 30:
                             checktradebuy = True
-
-                    if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
+                    if row['TradeTrigger'] >= 41 and row['TradeTrigger'] <= 70:
                         getRSIvalue = RSI('15m')
                         if getRSIvalue < 30:
                             checktradebuy = True
 
-                    if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 97:
+                    if row['TradeTrigger'] >= 71 and row['TradeTrigger'] <= 90:
                         getRSIvalue = RSI('1h')
                         if getRSIvalue < 30:
                             checktradebuy = True
 
-                    if row['TradeTrigger'] >= 98:
+                    if row['TradeTrigger'] >= 91:
                         getRSIvalue = RSI('4h')
                         if getRSIvalue < 30:
                             checktradebuy = True
@@ -498,7 +487,7 @@ def RSI(timeframe):
     # plt.show()
 
 
-def Set_MapTrigger():
+def Set_MapTrigger(NowPrice):
     ###### ----------Position   -----------###############
     ExposureBuy = 0
     Position = 0
@@ -506,7 +495,6 @@ def Set_MapTrigger():
     UseZone = 0
 
     ###### ---------- Map   -----------###############
-    NowPrice = getPrice(whatsymbol)
     df._set_value(whatsymbol, 'NowPrice', NowPrice)
     MaxZone = df.loc[whatsymbol]['MaxZone']
     MinZone = df.loc[whatsymbol]['MinZone']
