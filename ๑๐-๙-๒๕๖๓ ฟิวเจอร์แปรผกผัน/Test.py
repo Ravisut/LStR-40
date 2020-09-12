@@ -6,8 +6,8 @@ import callFuntionFutures
 
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**********',
-        'secret': '***********',
+        'apiKey': '******',
+        'secret': '*******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -31,6 +31,24 @@ def distance(a, b):
         return math.copysign((abs(a) + abs(b)),b)
 
 if test == 1:
+    info = callFuntionFutures.checkByIDoder(9468890183)
+    print(info)
+
+if test == 2:
+    info = callFuntionFutures.re("XRP-PERP",'market','sell','xrp position to close')
+    print(info)
+
+if test == 3:
+    my_trades = exchange.private_get_positions()
+    print("\n=============my_trades=============")
+    my_trades = pd.json_normalize(data=my_trades['result'])
+    df_curr_trade = pd.DataFrame(my_trades,
+                                 columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
+                                          'unrealizedPnl', 'realizedPnl'])
+    print(df_curr_trade)
+
+
+if test == 4:
     oderinfo = callFuntionFutures.OHLC("XRP-PERP", 3,'4h')
     oderinfo['Perc_Change'] = ((oderinfo['high'] - oderinfo['low']) / (oderinfo['low'] / 100))
 
@@ -42,23 +60,7 @@ if test == 1:
     print(cooldownTime)
     print(oderinfo)
 
-if test == 2:
-    info = callFuntionFutures.checkByIDoder(9468890183)
-    print(info)
-
 if test == 5:
-    info = callFuntionFutures.re("XRP-PERP",'market','sell','xrp position to close')
-    print(info)
-    my_trades = exchange.private_get_positions()
-    print("\n=============my_trades=============")
-    my_trades = pd.json_normalize(data=my_trades['result'])
-    df_curr_trade = pd.DataFrame(my_trades,
-                                 columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
-                                          'unrealizedPnl', 'realizedPnl'])
-    print(df_curr_trade)
-
-
-if test == 3:
     balance = exchange.fetch_balance()
     Totalbtc = balance['BTC']['total']
 
@@ -77,7 +79,7 @@ if test == 3:
     print(usdValue2)
     print(price)
 
-if test == 4:
+if test == 6:
 
     print(distance(-3,-6))  # -3
     print(distance(-3, 3))  #  6
