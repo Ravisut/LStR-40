@@ -6,7 +6,7 @@ import datetime
 #Update while Loop
 timeBegin = 0
 checkError = 0
-sleeptime = 60
+sleeptime = 30 # ถ่วงเวลา 30-60  วินาที
 while True:
     try:
         timeBegin = time.time()
@@ -18,7 +18,7 @@ while True:
         print('เวลา'+str(datetime.datetime.now().strftime('%H:%M'))+' กระบวนการ 1 รอบใช้เวลา: '+str(int(timeElapsed))+' วินาที')
         # จบกระบวนการทั้งหมดใน callFuntionFutures ใช้ 37-51 วิ แล้วเอา 60 - 37 = 23วิ ที่เหลือในการถ่วงเวลา
         # ทำให้ หน่วงเวลา 30 วิไม่ได้ เพราะ 1รอบใช้เวลา 37วิ และ กระบวนการห้ามนานเกิน 60วิ
-        time.sleep(sleeptime - timeElapsed)  # ถ่วงเวลา 60  วินาที
+        time.sleep(sleeptime - timeElapsed)  # ถ่วงเวลา 30-60  วินาที
 
 
     #""" เครดิตพี่นัท LazyTrader """

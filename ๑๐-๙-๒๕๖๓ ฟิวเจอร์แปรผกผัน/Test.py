@@ -6,8 +6,8 @@ import callFuntionFutures
 
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '******',
-        'secret': '*******',
+        'apiKey': '********',
+        'secret': '********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -16,7 +16,7 @@ else:
     exchange.headers = {
         'FTX-SUBACCOUNT': subaccount,
     }
-test = 2
+test = 1
 
 
 def distance(a, b):

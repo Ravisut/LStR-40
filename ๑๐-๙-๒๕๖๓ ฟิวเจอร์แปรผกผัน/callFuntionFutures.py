@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '**********',
-        'secret': '***********',
+        'apiKey': '********',
+        'secret': '*********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -93,15 +93,25 @@ def Trigger_trade(NowPrice):
             if pd.isna(row['FilledBuy']):
                 idOrderbuy = row['IDorderBuy']
                 orderMatchedBUY = checkByIDoder(idOrderbuy)
-                if orderMatchedBUY['filled'] == 0:
-                    # ถ้าหมดเวลา cooldown แล้วไม่ได้เปิดสักทีให้ ยกเลิกออเดอร์ลิมิต Sell
-                    if pd.notna(row['timecancelbuy']):
-                        # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
-                        first_time = row['timecancelbuy']
-                        start_time = first_time + 600  # นับถอยหลัง 10 นาที เพื่อยกเลิกออเดอร์
-                        target_time = time.time()
-                        timeElapsed = target_time - start_time
-                        if timeElapsed > 0:
+
+                if orderMatchedBUY['filled'] == orderMatchedBUY['amount']:
+                    row['timecancelbuy'] = np.nan
+                    row['FilledBuy'] = orderMatchedBUY['filled']
+                    row['ExposureBuy'] = orderMatchedBUY['filled'] * orderMatchedBUY['price']
+                    row['feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side'])  # fee
+                    # บันทึก TradeLog
+                    # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
+                    print('OpenOrder Price : ' + str(orderMatchedBUY['price']))
+                    print('Amount : ' + str(orderMatchedBUY['filled']))
+
+                if pd.notna(row['timecancelbuy']):
+                    # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
+                    first_time = row['timecancelbuy']
+                    start_time = first_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
+                    target_time = time.time()
+                    timeElapsed = target_time - start_time
+                    if timeElapsed > 0: # ถ้าหมดเวลา cooldown แล้วไม่ได้เปิดสักทีให้ ยกเลิกออเดอร์ลิมิต Sell
+                        if orderMatchedBUY['filled'] == 0:
                             cancelOrder(idOrderbuy)
                             # ลบ ข้อมูลกระสุนนัดนี้ เมื่อยกเลิกออเดอร์
                             # ถ้า cancel แล้วต้องเคลียร์ค่าเก่าออกให้หมด ไม่นั้นจะ error ccxt.base.errors.InvalidOrder: order_not_exist_or_not_allow_to_cancel
@@ -111,15 +121,18 @@ def Trigger_trade(NowPrice):
                             row['FilledBuy'] = np.nan
                             row['ExposureBuy'] = np.nan
                             row['timecancelbuy'] = np.nan
-                if orderMatchedBUY['filled'] == orderMatchedBUY['amount']:
-                    row['timecancelbuy'] = np.nan
-                    row['FilledBuy'] = orderMatchedBUY['filled']
-                    row['feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side'])  # fee
-                    # บันทึก TradeLog
-                    # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
-                    # กำหนด PD ก่อน
-                    print('OpenOrder Price : ' + str(orderMatchedBUY['price']))
-                    print('Amount : ' + str(orderMatchedBUY['filled']))
+                        if orderMatchedBUY['filled'] > 0 and orderMatchedBUY['filled'] < orderMatchedBUY['amount'] :
+                            cancelOrder(idOrderbuy)
+
+                            row['timecancelbuy'] = np.nan
+                            row['FilledBuy'] = orderMatchedBUY['filled']
+                            row['ExposureBuy'] = orderMatchedBUY['filled'] * orderMatchedBUY['price']
+                            row['feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side'])  # fee
+                            # บันทึก TradeLog
+                            # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
+                            print('OpenOrder Price : ' + str(orderMatchedBUY['price']))
+                            print('Amount : ' + str(orderMatchedBUY['filled']))
+
 
             elif pd.notna(row['FilledBuy']):
                 if pd.notna(row['IDorderSell']):
@@ -214,7 +227,7 @@ def Trigger_trade(NowPrice):
                         if pd.notna(row['timecancelsell']):
                             # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
                             first_time = row['timecancelsell']
-                            start_time = first_time + 600  # นับถอยหลัง 10 นาที เพื่อยกเลิกออเดอร์
+                            start_time = first_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
                             target_time = time.time()
                             timeElapsed = target_time - start_time
                             if timeElapsed > 0:
@@ -252,8 +265,13 @@ def Trigger_trade(NowPrice):
                                             print(getRSIvalue)
                                             checktradesell = True
 
-                                    if row['TradeTrigger'] >= 91:
+                                    if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 100:
                                         getRSIvalue = RSI('4h')
+                                        if getRSIvalue > 70:
+                                            print(getRSIvalue)
+                                            checktradesell = True
+                                    if row['TradeTrigger'] == 101:
+                                        getRSIvalue = RSI('1m')
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
@@ -296,8 +314,13 @@ def Trigger_trade(NowPrice):
                         if getRSIvalue < 30:
                             checktradebuy = True
 
-                    if row['TradeTrigger'] >= 91:
+                    if row['TradeTrigger'] >= 91 and row['TradeTrigger'] <= 100:
                         getRSIvalue = RSI('4h')
+                        if getRSIvalue < 30:
+                            checktradebuy = True
+
+                    if row['TradeTrigger'] == 101:
+                        getRSIvalue = RSI('1m')
                         if getRSIvalue < 30:
                             checktradebuy = True
                             # ถ่วงเวลา ตอนโวเข้า
@@ -319,7 +342,7 @@ def Trigger_trade(NowPrice):
                     row['IDorderBuy'] = orderBuy['id']
                     row['OpenPrice'] = orderBuy['price']
                     row['AmountBuy'] = orderBuy['amount']
-                    row['ExposureBuy'] = orderBuy['amount'] * orderBuy['price']
+                    #row['ExposureBuy'] = orderBuy['amount'] * orderBuy['price']
                     row['timecancelbuy'] = time.time()
 
 def re(symbol,types,side,amount,nowprice):
@@ -514,7 +537,8 @@ def Set_MapTrigger(NowPrice):
             if pd.notna(row['Zone']):
                 if pd.isna(row['TradeTrigger']):
                     # ---- เลือกว่าจะเทรดด้วยเงื่อนไขอะไรโดยการสุ่ม 3 ทามเฟรม 6 รูปแบบ
-                    row['TradeTrigger'] = random.randint(1, 100)
+                    #row['TradeTrigger'] = random.randint(1, 100)
+                    row['TradeTrigger'] = 101
             # ---- ดู Exposure ที่ถือครองอยู่
             if row['ExposureBuy'] > 0:
                 countExposure = row['ExposureBuy']
