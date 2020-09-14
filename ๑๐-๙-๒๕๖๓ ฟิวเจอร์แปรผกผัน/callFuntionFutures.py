@@ -28,8 +28,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '********',
-        'secret': '*********',
+        'apiKey': '*********',
+        'secret': '**********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -242,7 +242,7 @@ def Trigger_trade(NowPrice):
                 # เงื่อนไข ยิงกระสุน sell
                 if pd.isna(row['IDorderSell']):
                     if pd.notna(row['OpenPrice']):
-                        if NowPrice > (row['OpenPrice'] + (difZone*2)):  # ต้องมากกว่า อย่างน้อย 2 โซน ถึงจะปิดกำไรได้
+                        if NowPrice > (row['OpenPrice'] + (difZone*1)):  # ต้องมากกว่า อย่างน้อย 1 โซน ถึงจะปิดกำไรได้
                             # MapTrigger = -1 คือ พื้นที่ๆ ลดของที่มีอยู่ โดยลด Buy Hold ที่ถือไว้ โดย เปิด Sell เท่ากับ จำนวน Position ของกระสุนนัดนั้นๆ
                             if row['MapTrigger'] == -1 and row['Zone'] > 0:
                                 checktradesell = False
