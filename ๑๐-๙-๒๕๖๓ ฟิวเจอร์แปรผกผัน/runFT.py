@@ -20,6 +20,8 @@ while True:
         # ทำให้ หน่วงเวลา 30 วิไม่ได้ เพราะ 1รอบใช้เวลา 37วิ และ กระบวนการห้ามนานเกิน 60วิ
         time.sleep(sleeptime - timeElapsed)  # ถ่วงเวลา 30-60  วินาที
 
+        if sleeptime == 180:
+            sleeptime = 30
 
     #""" เครดิตพี่นัท LazyTrader """
     except ccxt.RequestTimeout as e:
@@ -44,16 +46,17 @@ while True:
         #print(str(e))
         print('Normal: ' + str(sleeptime))
         if 'sleep length must be non-negative' == str(e):
-            sleeptime = 120 # 2 นาที
+            sleeptime = 180 # 3 นาที
             print('except: ' + str(sleeptime))
-            checkError = checkError + 1
+            #checkError = checkError + 1
             time.sleep(30)  # 30 sec.
         else:
             # error เกิน 3 รอบให้หยุดโปรแกรม
-            if checkError == 3:
-                callFuntionFutures.LineNotify(e, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
-                break
-                # sys.exit()
+            #if checkError == 3:
+            callFuntionFutures.LineNotify(e, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
+            break
+            # sys.exit()
+
 
 
 
