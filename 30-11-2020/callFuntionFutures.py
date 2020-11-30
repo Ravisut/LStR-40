@@ -26,8 +26,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '********',
-        'secret': '********',
+        'apiKey': '******',
+        'secret': '******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -651,6 +651,9 @@ def Setup_beforeTrade():
                                , 'round': np.nan
                             })
         dfmapClone.to_csv('Map.csv', index=False)
+        # บันทึก ชีทหน้า Map
+        dfMapp = dfmapClone.drop(columns=[c for c in dfmapClone.columns if "Unnamed" in c]).dropna(how="all")
+        set_with_dataframe(gc.open(sheetname).worksheet('Map'), dfMapp)
 
         dfTradeClone = pd.DataFrame(columns=['IDorderOrderBuy'
                                        , 'IDorderOrderSell'
