@@ -18,8 +18,11 @@ sheetname = 'Data2'
 
 # เรียกข้อมูลใน google sheet และตั้งให้ คอลัม Product เป็น index ไว้ให้ pandas เรียกใช้
 df = get_as_dataframe(gc.open(sheetname).worksheet('Monitor')).set_index('Product')
-dfMap = get_as_dataframe(gc.open(sheetname).worksheet('Map'))
-dfTradeLog = get_as_dataframe(gc.open(sheetname).worksheet('TradeLog'))
+#dfMapSheet = get_as_dataframe(gc.open(sheetname).worksheet('Map'))
+#dfTradeLogSheet = get_as_dataframe(gc.open(sheetname).worksheet('TradeLog'))
+
+dfMap = pd.read_csv('Map.csv')
+dfTradeLog = pd.read_csv('TradeLog.csv')
 
 #### รายละเอียด ก่อนเทรด -------------------------------------------------------
 tradeFuntion = 'RSI'
@@ -28,8 +31,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '***********',
-        'secret': '***********',
+        'apiKey': 'OEVedNzAVbip3YW0NIfVp3ynLA9OdNEC3QU1PfAa',
+        'secret': 'VqGMCpVnmUlQA8YOsnCZp5ojpqAk-5emW46VR4iD',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -69,10 +72,14 @@ def updatee():
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
     set_with_dataframe(gc.open(sheetname).worksheet('Monitor'), dff.reset_index())
 
+    # บันทึก CSV หน้า TradeLog
+    dfMap.to_csv('C:/Users/HOME/Map.csv', index=False)
     # บันทึก ชีทหน้า Map
     dfMapp = dfMap.drop(columns=[c for c in dfMap.columns if "Unnamed" in c]).dropna(how="all")
     set_with_dataframe(gc.open(sheetname).worksheet('Map'), dfMapp)
 
+    # บันทึก CSV หน้า TradeLog
+    dfTradeLog.to_csv('C:/Users/HOME/TradeLog.csv', index=False)
     # บันทึกชีทหน้า TradeLog
     dfTradeLogg = dfTradeLog.drop(columns=[c for c in dfTradeLog.columns if "Unnamed" in c]).dropna(how="all")
     set_with_dataframe(gc.open(sheetname).worksheet('TradeLog'),dfTradeLogg)
@@ -206,7 +213,6 @@ def Trigger_trade(NowPrice):
                                                        , 'Profit': [str(profitshow)]
                                                        , 'feeBuy': [str(row['feeBuy'])]
                                                        , 'feeSell': [str(row['feeSell'])]
-
                                                     })
                         dfTradeLog.append(dfTradeLog3, ignore_index=True)
                         #dfTradeLog = dfTradeLog.append(dfTradeLog3, ignore_index=True)
@@ -533,7 +539,8 @@ def Set_MapTrigger(NowPrice):
     df._set_value(whatsymbol, 'NowPrice', NowPrice)
     MaxZone = df.loc[whatsymbol]['MaxZone']
     MinZone = df.loc[whatsymbol]['MinZone']
-    MaxLimitZone = df.loc[whatsymbol]['MaxLimitZone']
+    DifZoneB = df.loc[whatsymbol]['DifZoneB']
+    MaxLimitZone = MaxZone+(DifZoneB*10)
     DifPrice = float(NowPrice) - float(MaxLimitZone)
     # หรือ NowPrice < MaxLimitZone
     if DifPrice < 0 : # BUY ถ้ายังน้อยกว่า 0 แสดงว่ายังไม่หลุดโซน
@@ -579,13 +586,17 @@ def Set_MapTrigger(NowPrice):
         df._set_value(whatsymbol, 'DifZoneA', FindDiffZone())
 
 def Setup_beforeTrade():
+
+    #ติด drawdown หรือ ล้างพอร์ต
+    DDorLqd = df.loc[whatsymbol]['DDorLqd']
+
     #ทุน
     TotalBalance = df.loc[whatsymbol]['TotalBalance']
 
     # พื้นที่โซนเทรด
     MaxZone = df.loc[whatsymbol]['MaxZone']
     MinZone = df.loc[whatsymbol]['MinZone']
-    DifZone = df.loc[whatsymbol]['DifZoneB']
+    DifZoneB = df.loc[whatsymbol]['DifZoneB']
     zoneTrede = MaxZone - MinZone
     df._set_value(whatsymbol, 'ZoneTrede', zoneTrede)
 
@@ -597,7 +608,7 @@ def Setup_beforeTrade():
     df._set_value(whatsymbol, 'Leverage', Leverage)
 
     # หาจำนวนกระสุน
-    BulletLimitB = zoneTrede / DifZone
+    BulletLimitB = zoneTrede / DifZoneB
     # ต้นทุน Exposure ต่อนัด
     ExposurePerBullet = TotalBalance / BulletLimitB
     df._set_value(whatsymbol, 'BulletLimitB', BulletLimitB)
@@ -614,3 +625,53 @@ def Setup_beforeTrade():
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all")  # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
     set_with_dataframe(gc.open(sheetname).worksheet('Monitor'), dff.reset_index())  # บันทึกชีทหน้า Monitor
 
+    exposureType = 0
+    # ถ้า DDorLqd ใน google sheet = 1 คือ ติด drawdown
+    if DDorLqd == 1:
+        exposureType = ExposurePerBullet
+        #print(exposureType)
+    # ถ้า DDorLqd ใน google sheet = 2 คือ หลุดโซนล้างพอร์ต
+    if DDorLqd == 2:
+        exposureType = levExposurePerBullet
+
+    if DDorLqd == 1 or DDorLqd == 2 and TotalBalance != None and MaxZone != None and MinZone != None:
+        dfmapClone = pd.DataFrame({'Zone': np.arange(MinZone - (DifZoneB * 10), MaxZone + (DifZoneB * 10), DifZoneB)
+                               , 'UseZone': np.nan
+                               , 'Exposure': exposureType
+                               , 'MapTrigger': np.nan
+                               , 'IDorderBuy': np.nan
+                               , 'OpenPrice': np.nan
+                               , 'AmountBuy': np.nan
+                               , 'timecancelbuy': np.nan
+                               , 'FilledBuy': np.nan
+                               , 'feeBuy': np.nan
+                               , 'ExposureBuy': np.nan
+                               , 'NAV': np.nan
+                               , 'TradeTrigger': np.nan
+                               , 'IDorderSell': np.nan
+                               , 'ClosePrice': np.nan
+                               , 'AmountSell': np.nan
+                               , 'timecancelsell': np.nan
+                               , 'feeSell': np.nan
+                               , 'LastClosePrice': np.nan
+                               , 'Profit': np.nan
+                               , 'round': np.nan
+                            })
+
+        dfmapClone.to_csv('C:/Users/HOME/Map.csv', index=False)
+
+        dfTradeClone = pd.DataFrame({'IDorderOrderBuy': np.nan
+                                       , 'IDorderOrderSell': np.nan
+                                       , 'Open': np.nan
+                                       , 'Close': np.nan
+                                       , 'Amount': np.nan
+                                       , 'TradeTrigger': np.nan
+                                       , 'Zone': np.nan
+                                       , 'OpenTime': np.nan
+                                       , 'CloseTime': np.nan
+                                       , 'Profit': np.nan
+                                       , 'feeBuy': np.nan
+                                       , 'feeSell': np.nan
+                                    })
+
+        dfTradeClone.to_csv('C:/Users/HOME/TradeLog.csv', index=False)
