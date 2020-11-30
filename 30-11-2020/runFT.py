@@ -3,13 +3,14 @@ import ccxt
 import time
 import datetime
 
-presskey = person = input('Prees1 =  checklist Press2 = run Bot : ')
+presskey = person = input('Press1 checklist or Press2 run Bot : ')
 
 if presskey == '1':
     #เช็คค่าตัวแปรต่างๆก่อนรันบอทจริง
     callFuntionFutures.Setup_beforeTrade()
 
-if presskey == '2' :
+if presskey == '2':
+
     # Update while Loop
     timeBegin = 0
     checkError = 0
@@ -55,7 +56,7 @@ if presskey == '2' :
             if 'sleep length must be non-negative' == str(e):
                 print('Normal: ' + str(sleeptime))
                 sleeptime = 300  # 5 นาที
-                print('except: ' + str(sleeptime))
+                print('except sleeptime : ' + str(sleeptime))
                 checkError = checkError + 1
                 time.sleep(30)  # 30 sec.
             else:

@@ -15,15 +15,10 @@ creds = ServiceAccountCredentials.from_json_keyfile_name("API.json", scope)
 gc = gspread.authorize(creds)
 
 sheetname = 'Data2'
-
 # เรียกข้อมูลใน google sheet และตั้งให้ คอลัม Product เป็น index ไว้ให้ pandas เรียกใช้
 df = get_as_dataframe(gc.open(sheetname).worksheet('Monitor')).set_index('Product')
-#dfMapSheet = get_as_dataframe(gc.open(sheetname).worksheet('Map'))
-#dfTradeLogSheet = get_as_dataframe(gc.open(sheetname).worksheet('TradeLog'))
-
 dfMap = pd.read_csv('Map.csv')
-dfTradeLog = pd.read_csv('TradeLog.csv')
-
+#dfTradeLog = pd.read_csv('TradeLog.csv')
 #### รายละเอียด ก่อนเทรด -------------------------------------------------------
 tradeFuntion = 'RSI'
 Balance = 'USD'
@@ -31,8 +26,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*******',
-        'secret': '*******',
+        'apiKey': '********',
+        'secret': '********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -72,17 +67,12 @@ def updatee():
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
     set_with_dataframe(gc.open(sheetname).worksheet('Monitor'), dff.reset_index())
 
-    # บันทึก CSV หน้า TradeLog
-    dfMap.to_csv('C:/Users/HOME/Map.csv', index=False)
+    # บันทึก CSV หน้า Map
+    dfMap.to_csv('Map.csv', index=False)
     # บันทึก ชีทหน้า Map
     dfMapp = dfMap.drop(columns=[c for c in dfMap.columns if "Unnamed" in c]).dropna(how="all")
     set_with_dataframe(gc.open(sheetname).worksheet('Map'), dfMapp)
 
-    # บันทึก CSV หน้า TradeLog
-    dfTradeLog.to_csv('C:/Users/HOME/TradeLog.csv', index=False)
-    # บันทึกชีทหน้า TradeLog
-    dfTradeLogg = dfTradeLog.drop(columns=[c for c in dfTradeLog.columns if "Unnamed" in c]).dropna(how="all")
-    set_with_dataframe(gc.open(sheetname).worksheet('TradeLog'),dfTradeLogg)
     #--------------------------------------------
 
     pd.set_option('display.width', 1000)
@@ -102,7 +92,7 @@ def updatee():
 
 def Trigger_trade(NowPrice):
     #โซนขั้นต่ำ ระหว่างกระสุน
-    difZone = df.loc[whatsymbol]['DifZone']
+    difZone = df.loc[whatsymbol]['DifZoneB']
     for i, row in dfMap.iterrows():
         if pd.notna(row['IDorderBuy']):
             # จะเปิด ออเดอร์ sell ได้ต้องมี Position Szie ด้าน Buy ก่อน
@@ -198,6 +188,7 @@ def Trigger_trade(NowPrice):
                         #orderMatchedBUY = checkByIDoder(idOrderbuy)
 
                         #dfTradeLog = get_as_dataframe(gc.open(sheetname).worksheet('TradeLog'))
+                        dfTradeLog = pd.read_csv('TradeLog.csv')
                         # บันทึก TradeLog
                         # ต้องแปลงเป็น สติงทั้งหมดไม่งั้นบันทึกไม่ได้
                         # กำหนด PD ก่อน
@@ -214,10 +205,12 @@ def Trigger_trade(NowPrice):
                                                        , 'feeBuy': [str(row['feeBuy'])]
                                                        , 'feeSell': [str(row['feeSell'])]
                                                     })
-                        dfTradeLog.append(dfTradeLog3, ignore_index=True)
-                        #dfTradeLog = dfTradeLog.append(dfTradeLog3, ignore_index=True)
-                        #dfTradeLogg = dfTradeLog.drop(columns=[c for c in dfTradeLog.columns if "Unnamed" in c]).dropna(how="all")
-                        #set_with_dataframe(gc.open(sheetname).worksheet('TradeLog'),dfTradeLogg)  # บันทึกชีทหน้า TradeLog
+                        dfTradeLog = dfTradeLog.append(dfTradeLog3, ignore_index=True)
+                        # บันทึก CSV หน้า TradeLog
+                        dfTradeLog.to_csv('TradeLog.csv', index=False)
+                        # บันทึกชีทหน้า TradeLog
+                        dfTradeLogg = dfTradeLog.drop(columns=[c for c in dfTradeLog.columns if "Unnamed" in c]).dropna(how="all")
+                        set_with_dataframe(gc.open(sheetname).worksheet('TradeLog'), dfTradeLogg)
                         
                         # ลบ ข้อมูลกระสุน เมื่อจบครบรอบ ทำให้กระสุนว่าง
                         # ข้อมูลกระสุน buy
@@ -657,21 +650,20 @@ def Setup_beforeTrade():
                                , 'Profit': np.nan
                                , 'round': np.nan
                             })
+        dfmapClone.to_csv('Map.csv', index=False)
 
-        dfmapClone.to_csv('C:/Users/HOME/Map.csv', index=False)
-
-        dfTradeClone = pd.DataFrame({'IDorderOrderBuy': np.nan
-                                       , 'IDorderOrderSell': np.nan
-                                       , 'Open': np.nan
-                                       , 'Close': np.nan
-                                       , 'Amount': np.nan
-                                       , 'TradeTrigger': np.nan
-                                       , 'Zone': np.nan
-                                       , 'OpenTime': np.nan
-                                       , 'CloseTime': np.nan
-                                       , 'Profit': np.nan
-                                       , 'feeBuy': np.nan
-                                       , 'feeSell': np.nan
-                                    })
-
-        dfTradeClone.to_csv('C:/Users/HOME/TradeLog.csv', index=False)
+        dfTradeClone = pd.DataFrame(columns=['IDorderOrderBuy'
+                                       , 'IDorderOrderSell'
+                                       , 'Open'
+                                       , 'Close'
+                                       , 'Amount'
+                                       , 'TradeTrigger'
+                                       , 'Zone'
+                                       , 'OpenTime'
+                                       , 'CloseTime'
+                                       , 'Profit'
+                                       , 'feeBuy'
+                                       , 'feeSell'
+                                    ])
+        dfTradeClone.to_csv('TradeLog.csv', index=False)
+        #dfTradeClone.to_csv('C:/Users/HOME/TradeLog.csv', index=False)
