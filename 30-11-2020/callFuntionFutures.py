@@ -27,8 +27,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '******',
-        'secret': '******',
+        'apiKey': '*******',
+        'secret': '*******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -447,7 +447,10 @@ def get_Collateral(get_asset,typee):
 
     balance = exchange.fetch_balance(params)
     df_balance = pd.DataFrame.from_dict(balance['info'][result]).set_index(listAsset)
-    df_balance[typee] = df_balance.free.astype(float)
+    if typee == 'free':
+        df_balance[typee] = df_balance.free.astype(float)
+    if typee == 'total':
+        df_balance[typee] = df_balance.total.astype(float)
     return df_balance.loc[get_asset][typee]
 
 def LineNotify(mse,typee):
@@ -575,7 +578,7 @@ def Set_MapTrigger(NowPrice):
                 NAV = Exposurediff - row['ExposureBuy']
                 row['NAV'] = NAV
                 #ถ้าซื้อถูก แล้ว ราคาปัจจุบันแพงกว่า Exposure ปัจจุบัน มันจะมากกว่า Exposure ที่เคยซื้อต่ำในอดีต
-        df._set_value(whatsymbol, 'TotalCollateral', get_Collateral(Balance, 'total'))
+        df._set_value(whatsymbol, 'TotalCollateral', get_Collateral(Balance,'total'))
         df._set_value(whatsymbol, 'FreeCollateral', get_Collateral(Balance,'free'))
         df._set_value(whatsymbol, 'DifZoneA', FindDiffZone())
         if pd.isna(df.loc[whatsymbol]['EntryPrice']):
