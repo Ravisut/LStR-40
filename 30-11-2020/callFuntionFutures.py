@@ -27,8 +27,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*******',
-        'secret': '*******',
+        'apiKey': '********',
+        'secret': '********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -62,16 +62,6 @@ def updatee():
     if df.loc[whatsymbol]['Stat'] != 'Cooldown':
         # ----- ดูว่าเข้าเงื่อนไขเทรดยัง
         Trigger_trade(NowPrice)
-
-        # อัพเดท ความเคลื่อนไหวของพอร์ต ทุกๆ 4 ชั่วโมง
-        start_time = df.loc[whatsymbol]['TimeToUpdateFlowLog']
-        target_time = start_time + 14400 # 14400 วินาที คือ 4 ชั่วโมง
-        nowtime = time.time()
-        timeElapsed = target_time - nowtime
-        if timeElapsed > 0:
-            UpdateFlow(NowPrice)
-            df._set_value(whatsymbol, 'TimeToUpdateFlowLog', time.time())
-
 
     #-----------บันทึก Google shhet--------------
     # บันทึกชีทหน้า Monitor
@@ -590,6 +580,18 @@ def Set_MapTrigger(NowPrice):
         df._set_value(whatsymbol, 'DifZoneA', FindDiffZone())
         if pd.isna(df.loc[whatsymbol]['EntryPrice']):
             df._set_value(whatsymbol, 'EntryPrice', NowPrice)
+
+
+        # อัพเดท ความเคลื่อนไหวของพอร์ต ทุกๆ 4 ชั่วโมง
+        if pd.isna(df.loc[whatsymbol]['TimeToUpdateFlowLog']):
+            df._set_value(whatsymbol, 'TimeToUpdateFlowLog', time.time())
+        start_time = df.loc[whatsymbol]['TimeToUpdateFlowLog']
+        target_time = start_time + 14400  # 14400 วินาที คือ 4 ชั่วโมง
+        nowtime = time.time()
+        timeElapsed = target_time - nowtime
+        if timeElapsed > 0:
+            UpdateFlow(NowPrice)
+            df._set_value(whatsymbol, 'TimeToUpdateFlowLog', time.time())
 
 
 def Setup_beforeTrade():
