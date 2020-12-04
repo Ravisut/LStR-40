@@ -4,10 +4,10 @@ import math
 import callFuntionFutures
 
 
-subaccount = 'Benz-Test-Bot'  # ถ้ามี ซับแอคเคอร์ของ FTX
+subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '********',
-        'secret': '********',
+        'apiKey': '**********',
+        'secret': '**********',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -16,8 +16,7 @@ else:
     exchange.headers = {
         'FTX-SUBACCOUNT': subaccount,
     }
-test = 1
-
+test = 3
 
 def distance(a, b):
     if (a == b):
@@ -45,7 +44,11 @@ if test == 3:
     df_curr_trade = pd.DataFrame(my_trades,
                                  columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
                                           'unrealizedPnl', 'realizedPnl'])
+    pd.set_option('display.width', 1000)
+    pd.set_option('display.max_columns', 1000)
     print(df_curr_trade)
+    print(my_trades)
+    #1.274975
 
 
 if test == 4:
@@ -99,7 +102,16 @@ def fetchTrades():
 #fetchTrades()
 
 
+if test == 7:
+    result = 'result'
+    listAsset = 'coin'
+    params = {'recvWindow': 50000}
 
+    balance = exchange.fetch_balance(params)
+    df_balance = pd.DataFrame.from_dict(balance['info'][result]).set_index(listAsset)
+    df_balance['free'] = df_balance.free.astype(float)
+    print(df_balance)
+    print(df_balance.loc['USD']['free'])
 
 
 

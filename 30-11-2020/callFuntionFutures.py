@@ -1,6 +1,7 @@
 import ccxt
 import json
 import time
+import datetime
 import random
 import requests
 import numpy as np
@@ -26,8 +27,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '********',
-        'secret': '********',
+        'apiKey': '*******',
+        'secret': '*******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -62,6 +63,16 @@ def updatee():
         # ----- ดูว่าเข้าเงื่อนไขเทรดยัง
         Trigger_trade(NowPrice)
 
+        # อัพเดท ความเคลื่อนไหวของพอร์ต ทุกๆ 4 ชั่วโมง
+        start_time = df.loc[whatsymbol]['TimeToUpdateFlowLog']
+        target_time = start_time + 14400 # 14400 วินาที คือ 4 ชั่วโมง
+        nowtime = time.time()
+        timeElapsed = target_time - nowtime
+        if timeElapsed > 0:
+            UpdateFlow(NowPrice)
+            df._set_value(whatsymbol, 'TimeToUpdateFlowLog', time.time())
+
+
     #-----------บันทึก Google shhet--------------
     # บันทึกชีทหน้า Monitor
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
@@ -85,7 +96,7 @@ def updatee():
     my_trades = pd.json_normalize(data=my_trades['result'])
     df_curr_trade = pd.DataFrame(my_trades,
                                  columns=['future', 'side', 'entryPrice', 'estimatedLiquidationPrice', 'size', 'cost',
-                                          'unrealizedPnl', 'realizedPnl'])
+                                          'collateralUsed','unrealizedPnl', 'realizedPnl'])
     print(df_curr_trade)
     print("market_price: " + str(NowPrice))
 
@@ -111,10 +122,10 @@ def Trigger_trade(NowPrice):
 
                 if pd.notna(row['timecancelbuy']):
                     # ผ่านไป 60 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
-                    first_time = row['timecancelbuy']
-                    start_time = first_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
-                    target_time = time.time()
-                    timeElapsed = target_time - start_time
+                    start_time = row['timecancelbuy']
+                    target_time = start_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
+                    now_time = time.time()
+                    timeElapsed = now_time - target_time
                     if timeElapsed > 0: # ถ้าหมดเวลา cooldown แล้วไม่ได้เปิดสักทีให้ ยกเลิกออเดอร์ลิมิต Buy
                         if orderMatchedBUY['filled'] == 0:
                             cancelOrder(idOrderbuy)
@@ -234,11 +245,11 @@ def Trigger_trade(NowPrice):
                     elif orderMatchedSELL['filled'] == 0:
                         # ถ้าหมดเวลา cooldown แล้วไม่ได้เปิดสักทีให้ ยกเลิกออเดอร์ลิมิต Sell
                         if pd.notna(row['timecancelsell']):
-                            # ผ่านไป 10 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
-                            first_time = row['timecancelsell']
-                            start_time = first_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
-                            target_time = time.time()
-                            timeElapsed = target_time - start_time
+                            # ผ่านไป 60 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
+                            start_time = row['timecancelsell']
+                            target_time = start_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
+                            now_time = time.time()
+                            timeElapsed = now_time - target_time
                             if timeElapsed > 0:
                                 cancelOrder(idOrdersell)
                                 # ลบ ข้อมูลกระสุนนัดนี้ เพื่อยกเลิกออเดอร์
@@ -437,15 +448,17 @@ def getPrice(pair):
     sendBack = float(dataPrice['last'])
     return sendBack
 
-def get_balance(get_asset):
+def get_Collateral(get_asset,typee):
     result = 'result'
     listAsset = 'coin'
     params = {'recvWindow': 50000}
 
+    # typee = 'free' or 'total'
+
     balance = exchange.fetch_balance(params)
     df_balance = pd.DataFrame.from_dict(balance['info'][result]).set_index(listAsset)
-    df_balance['free'] = df_balance.free.astype(float)
-    return df_balance.loc[get_asset]['free']
+    df_balance[typee] = df_balance.free.astype(float)
+    return df_balance.loc[get_asset][typee]
 
 def LineNotify(mse,typee):
     # แจ้งเตือนผ่านไลน์เมื อเกิดการรีบาลานซ์
@@ -471,7 +484,7 @@ def RSI(timeframe):
     window_length = 7
 
     # Get price XRP
-    datainfo = OHLC("XRP-PERP", 21,timeframe)
+    datainfo = OHLC(whatsymbol, 21,timeframe)
 
     # Get just the  close
     close = datainfo['close']
@@ -572,9 +585,12 @@ def Set_MapTrigger(NowPrice):
                 NAV = Exposurediff - row['ExposureBuy']
                 row['NAV'] = NAV
                 #ถ้าซื้อถูก แล้ว ราคาปัจจุบันแพงกว่า Exposure ปัจจุบัน มันจะมากกว่า Exposure ที่เคยซื้อต่ำในอดีต
-
-        df._set_value(whatsymbol, 'Balance', get_balance(Balance))
+        df._set_value(whatsymbol, 'TotalCollateral', get_Collateral(Balance, 'total'))
+        df._set_value(whatsymbol, 'FreeCollateral', get_Collateral(Balance,'free'))
         df._set_value(whatsymbol, 'DifZoneA', FindDiffZone())
+        if pd.isna(df.loc[whatsymbol]['EntryPrice']):
+            df._set_value(whatsymbol, 'EntryPrice', NowPrice)
+
 
 def Setup_beforeTrade():
 
@@ -582,7 +598,7 @@ def Setup_beforeTrade():
     DDorLqd = df.loc[whatsymbol]['DDorLqd']
 
     #ทุน
-    TotalBalance = df.loc[whatsymbol]['TotalBalance']
+    Capital = df.loc[whatsymbol]['Capital']
 
     # พื้นที่โซนเทรด
     MaxZone = df.loc[whatsymbol]['MaxZone']
@@ -601,7 +617,7 @@ def Setup_beforeTrade():
     # หาจำนวนกระสุน
     BulletLimitB = zoneTrede / DifZoneB
     # ต้นทุน Exposure ต่อนัด
-    ExposurePerBullet = TotalBalance / BulletLimitB
+    ExposurePerBullet = Capital / BulletLimitB
     df._set_value(whatsymbol, 'BulletLimitB', BulletLimitB)
     df._set_value(whatsymbol, 'ExposurePerBullet', ExposurePerBullet)
     # ต้นทุน Exposure แบบเลเวอเรจ ต่อนัด
@@ -625,7 +641,7 @@ def Setup_beforeTrade():
     if DDorLqd == 2:
         exposureType = levExposurePerBullet
 
-    if DDorLqd == 1 or DDorLqd == 2 and TotalBalance != None and MaxZone != None and MinZone != None:
+    if DDorLqd == 1 or DDorLqd == 2 and Capital != None and MaxZone != None and MinZone != None:
         dfmapClone = pd.DataFrame({'Zone': np.arange(MinZone - (DifZoneB * 10), MaxZone + (DifZoneB * 10), DifZoneB)
                                , 'UseZone': np.nan
                                , 'Exposure': exposureType
@@ -654,17 +670,55 @@ def Setup_beforeTrade():
         set_with_dataframe(gc.open(sheetname).worksheet('Map'), dfMapp)
 
         dfTradeClone = pd.DataFrame(columns=['IDorderOrderBuy'
-                                       , 'IDorderOrderSell'
-                                       , 'Open'
-                                       , 'Close'
-                                       , 'Amount'
-                                       , 'TradeTrigger'
-                                       , 'Zone'
-                                       , 'OpenTime'
-                                       , 'CloseTime'
-                                       , 'Profit'
-                                       , 'feeBuy'
-                                       , 'feeSell'
+                                           , 'IDorderOrderSell'
+                                           , 'Open'
+                                           , 'Close'
+                                           , 'Amount'
+                                           , 'TradeTrigger'
+                                           , 'Zone'
+                                           , 'OpenTime'
+                                           , 'CloseTime'
+                                           , 'Profit'
+                                           , 'feeBuy'
+                                           , 'feeSell'
                                     ])
         dfTradeClone.to_csv('TradeLog.csv', index=False)
         #dfTradeClone.to_csv('C:/Users/HOME/TradeLog.csv', index=False)
+        
+        dfFlowClone = pd.DataFrame(columns=['Datetime'
+                                            , 'TotalCollateral'
+                                            , 'FreeCollateral'
+                                            , 'ProductPirce'
+                                            , 'percentPortValue'
+                                            , 'percentPriceChange'
+                                            ])
+        dfFlowClone.to_csv('FlowLog.csv', index=False)
+
+
+def UpdateFlow(NowPrice):
+
+    StartBalace = df.loc[whatsymbol]['Capital']
+    EntryPrice = df.loc[whatsymbol]['EntryPrice']
+
+    TotalCollateral = df.loc[whatsymbol]['TotalCollateral']
+    FreeCollateral = df.loc[whatsymbol]['FreeCollateral']
+
+    percentPortValue = (TotalCollateral - StartBalace) / (StartBalace/100)
+    percentPriceChange = (NowPrice - EntryPrice) / (EntryPrice/100)
+
+    dfFlowLog = pd.read_csv('FlowLog.csv')
+    dfFlowLog2 = pd.DataFrame({'Datetime': [str(datetime.datetime.now().strftime('%H:%M'))]
+                               , 'TotalCollateral': [str(TotalCollateral)]
+                               , 'FreeCollateral': [str(FreeCollateral)]
+                               , 'ProductPirce': [str(NowPrice)]
+                               , 'percentPortValue': [str(percentPortValue)]
+                               , 'percentPriceChange': [str(percentPriceChange)]
+                                })
+    dfFlowLog = dfFlowLog.append(dfFlowLog2, ignore_index=True)
+    # บันทึก CSV หน้า TradeLog
+    dfFlowLog.to_csv('FlowLog.csv', index=False)
+    # บันทึกชีทหน้า TradeLog
+    dfFlowLogg = dfFlowLog.drop(columns=[c for c in dfFlowLog.columns if "Unnamed" in c]).dropna(how="all")
+    set_with_dataframe(gc.open(sheetname).worksheet('FlowLog'), dfFlowLogg)
+
+
