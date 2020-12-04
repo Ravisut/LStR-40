@@ -27,8 +27,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '********',
-        'secret': '********',
+        'apiKey': '******',
+        'secret': '******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -588,7 +588,7 @@ def Set_MapTrigger(NowPrice):
         start_time = df.loc[whatsymbol]['TimeToUpdateFlowLog']
         target_time = start_time + 14400  # 14400 วินาที คือ 4 ชั่วโมง
         nowtime = time.time()
-        timeElapsed = target_time - nowtime
+        timeElapsed = nowtime - target_time
         if timeElapsed > 0:
             UpdateFlow(NowPrice)
             df._set_value(whatsymbol, 'TimeToUpdateFlowLog', time.time())
