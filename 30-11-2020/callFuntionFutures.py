@@ -27,8 +27,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*******',
-        'secret': '*******',
+        'apiKey': '*****',
+        'secret': '*****',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -696,6 +696,7 @@ def Setup_beforeTrade():
                                             , 'ProductPirce'
                                             , 'percentPortValue'
                                             , 'percentPriceChange'
+                                            , 'percentGrowth'
                                             ])
         dfFlowClone.to_csv('FlowLog.csv', index=False)
 
@@ -710,6 +711,7 @@ def UpdateFlow(NowPrice):
 
     percentPortValue = (TotalCollateral - StartBalace) / (StartBalace/100)
     percentPriceChange = (NowPrice - EntryPrice) / (EntryPrice/100)
+    percentGrowth = percentPortValue - percentPriceChange
 
     dfFlowLog = pd.read_csv('FlowLog.csv')
     dfFlowLog2 = pd.DataFrame({'Datetime': [str(datetime.datetime.now().strftime('%H:%M'))]
@@ -718,6 +720,7 @@ def UpdateFlow(NowPrice):
                                , 'ProductPirce': [str(NowPrice)]
                                , 'percentPortValue': [str(percentPortValue)]
                                , 'percentPriceChange': [str(percentPriceChange)]
+                               , 'percentGrowth': [str(percentGrowth)]
                                 })
     dfFlowLog = dfFlowLog.append(dfFlowLog2, ignore_index=True)
     # บันทึก CSV หน้า TradeLog
