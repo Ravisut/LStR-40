@@ -21,14 +21,14 @@ df = get_as_dataframe(gc.open(sheetname).worksheet('Monitor')).set_index('Produc
 dfMap = pd.read_csv('Map.csv')
 #dfTradeLog = pd.read_csv('TradeLog.csv')
 #### รายละเอียด ก่อนเทรด -------------------------------------------------------
-tradeFuntion = 'RSI'
+tradeFuntion = 'RRSI' #ตัวสับคัดเอ้า กรณี Position Size เพี้ยนแล้วจะทดสอบโค้ด
 Balance = 'USD'
 whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '*****',
-        'secret': '*****',
+        'apiKey': '******',
+        'secret': '******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -45,6 +45,9 @@ def updatee():
     NowPrice = getPrice(whatsymbol)
     # ----- ตั้งค่า Map ว่าแต่ล่ะโซนควรมีกระสุนหรือไม่----- # ----- ส่วนแสดงผลในหน้า Monitor --------
     Set_MapTrigger(NowPrice)
+    # ----- ดูว่าเข้าเงื่อนไขเทรดยัง
+    Trigger_trade(NowPrice)
+
 
     if df.loc[whatsymbol]['Stat'] == 'Cooldown':
         TimerDelay = df.loc[whatsymbol]['TimerDelay']
@@ -59,22 +62,24 @@ def updatee():
             df._set_value(whatsymbol, 'TimerDelay', np.nan)
             df._set_value(whatsymbol, 'TimerTrigger', np.nan)
             df._set_value(whatsymbol, 'CooldownTime', np.nan)
-    if df.loc[whatsymbol]['Stat'] != 'Cooldown':
+    #if df.loc[whatsymbol]['Stat'] != 'Cooldown':
         # ----- ดูว่าเข้าเงื่อนไขเทรดยัง
-        Trigger_trade(NowPrice)
+        #Trigger_trade(NowPrice)
 
     #-----------บันทึก Google shhet--------------
     # บันทึกชีทหน้า Monitor
     dff = df.drop(columns=[c for c in df.columns if "Unnamed" in c]).dropna(how="all") # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
     set_with_dataframe(gc.open(sheetname).worksheet('Monitor'), dff.reset_index())
 
+    #--------------------------------------------
     # บันทึก CSV หน้า Map
+    print('ver.1 tradetrigger')
+    print(dfMap.loc[32]['Zone'])
+    print(dfMap.loc[32]['MapTrigger'])
     dfMap.to_csv('Map.csv', index=False)
     # บันทึก ชีทหน้า Map
     dfMapp = dfMap.drop(columns=[c for c in dfMap.columns if "Unnamed" in c]).dropna(how="all")
     set_with_dataframe(gc.open(sheetname).worksheet('Map'), dfMapp)
-
-    #--------------------------------------------
 
     pd.set_option('display.width', 1000)
     pd.set_option('display.max_columns', 1000)
@@ -548,6 +553,16 @@ def Set_MapTrigger(NowPrice):
                 row['UseZone'] = -1
             if NowPrice < row['Zone']:
                 row['MapTrigger'] = 1
+                if i == 32:
+                    print('ver.3 inside if')
+                    print(row['Zone'])
+                    print(row['MapTrigger'])
+                    dfMap._set_value(32, 'MapTrigger', 1)
+                    print(dfMap.loc[32]['Zone'])
+                    print(dfMap.loc[32]['MapTrigger'])
+
+                    #dfMap.loc[32]['MapTrigger']
+
             elif NowPrice > row['Zone']:
                 row['MapTrigger'] = -1
             if pd.notna(row['Zone']):
@@ -595,6 +610,9 @@ def Set_MapTrigger(NowPrice):
         if timeElapsed > 0:
             UpdateFlow(NowPrice)
             df._set_value(whatsymbol, 'TimeToUpdateFlowLog', time.time())
+    print('ver.2 updateMap')
+    print(dfMap.loc[32]['Zone'])
+    print(dfMap.loc[32]['MapTrigger'])
 
 
 def Setup_beforeTrade():
