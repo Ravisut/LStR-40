@@ -21,14 +21,14 @@ df = get_as_dataframe(gc.open(sheetname).worksheet('Monitor')).set_index('Produc
 dfMap = pd.read_csv('Map.csv')
 #dfTradeLog = pd.read_csv('TradeLog.csv')
 #### รายละเอียด ก่อนเทรด -------------------------------------------------------
-tradeFuntion = 'RSI' #ตัวสับคัดเอ้า กรณี Position Size เพี้ยนแล้วจะทดสอบโค้ด
+tradeFuntion = 'SuperTrend' #ตัวสับคัดเอ้า กรณี Position Size เพี้ยนแล้วจะทดสอบโค้ด เปลี่ยนให้เพี้ยน จะได้เทรดไม่ได้
 Balance = 'USD'
 whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '***',
-        'secret': '***',
+        'apiKey': '******',
+        'secret': '******',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -296,6 +296,11 @@ def Trigger_trade(NowPrice):
                                         if getRSIvalue > 70:
                                             print(getRSIvalue)
                                             checktradesell = True
+                                if tradeFuntion == 'SuperTrend' :
+                                    getvalue = SuperTrend2('1m')
+                                    if getvalue == 2:
+                                        print('Sell')
+                                        checktradesell = True
 
                                 if tradeFuntion == 'percent':
                                     Openprice_ = row['OpenPrice']
@@ -347,6 +352,11 @@ def Trigger_trade(NowPrice):
                             # ถ่วงเวลา ตอนโวเข้า
                             # df._set_value(whatsymbol, 'TimerDelay', time.time())
                             # df._set_value(whatsymbol, 'Stat', 'Cooldown')
+                if tradeFuntion == 'SuperTrend':
+                    getvalue = SuperTrend2('1m')
+                    if getvalue == 1:
+                        print('Buy')
+                        checktradebuy = True
 
                 if tradeFuntion == 'percent':
                     if NowPrice < row['Zone']:
@@ -534,7 +544,84 @@ def RSI(timeframe):
     # RSI.plot()
     # plt.legend(['RSI via SMA'])
     # plt.show()
+def SuperTrend2 (timeframe):
 
+    Asset_Rebalance_01 = whatsymbol
+    Indicator_TF = timeframe
+    Indicator_Period = 24
+    ATR_Multiple =  1
+
+    data = OHLC(Asset_Rebalance_01, Indicator_Period,Indicator_TF)
+    data=data.reset_index(drop=True)
+
+    #data['tr0'] = abs(data["high"] - data["low"])
+    #data['tr1'] = abs(data["high"] - data["close"].shift(1))
+    #data['tr2'] = abs(data["low"]- data["close"].shift(1))
+    #data["TR"] = round(data[['tr0', 'tr1', 'tr2']].max(axis=1),2)
+    #data["ATR"]=0.00
+    #data['BUB']=0.00
+    #data["BLB"]=0.00
+    data["FUB"]=0.00
+    data["FLB"]=0.00
+    data["ST"]=0.00
+
+    # Calculating ATR
+    data['datetime'] = pd.to_datetime(data['datetime'], unit='ms')
+    data['HL'] = data['high'] - data['low']
+    data['HC'] = abs(data['high'] - data['close'].shift())
+    data['LC'] = abs(data['low'] - data['close'].shift())
+    data['TR'] = data[['HL','HC','LC']].max(axis=1)
+    data['ATR'] = data['TR'].rolling(Indicator_Period).mean()
+    data['SMA'] = data['close'].rolling(Indicator_Period).mean()
+    atrValue = data["ATR"].sum()
+
+    data['BUB'] = round(((data["high"] + data["low"]) / 2) + (ATR_Multiple *atrValue),2)
+    data['BLB'] = round(((data["high"] + data["low"]) / 2) - (ATR_Multiple * atrValue),2)
+
+    for i, row in data.iterrows():
+        if i == 0:
+            data.loc[i,"FUB"]=0.00
+        else:
+            if (data.loc[i,"BUB"]<data.loc[i-1,"FUB"])|(data.loc[i-1,"close"]>data.loc[i-1,"FUB"]):
+                data.loc[i,"FUB"]=data.loc[i,"BUB"]
+            else:
+                data.loc[i,"FUB"]=data.loc[i-1,"FUB"]
+
+    for i, row in data.iterrows():
+        if i==0:
+            data.loc[i,"FLB"]=0.00
+        else:
+            if (data.loc[i,"BLB"]>data.loc[i-1,"FLB"])|(data.loc[i-1,"close"]<data.loc[i-1,"FLB"]):
+                data.loc[i,"FLB"]=data.loc[i,"BLB"]
+            else:
+                data.loc[i,"FLB"]=data.loc[i-1,"FLB"]
+
+    for i, row in data.iterrows():
+        if i == 0:
+            data.loc[i,"ST"]=0.00
+        elif (data.loc[i-1,"ST"]==data.loc[i-1,"FUB"]) & (data.loc[i,"close"]<=data.loc[i,"FUB"]):
+            data.loc[i,"ST"]=data.loc[i,"FUB"]
+        elif (data.loc[i-1,"ST"]==data.loc[i-1,"FUB"])&(data.loc[i,"close"]>data.loc[i,"FUB"]):
+            data.loc[i,"ST"]=data.loc[i,"FLB"]
+        elif (data.loc[i-1,"ST"]==data.loc[i-1,"FLB"])&(data.loc[i,"close"]>=data.loc[i,"FLB"]):
+            data.loc[i,"ST"]=data.loc[i,"FLB"]
+        elif (data.loc[i-1,"ST"]==data.loc[i-1,"FLB"])&(data.loc[i,"close"]<data.loc[i,"FLB"]):
+            data.loc[i,"ST"]=data.loc[i,"FUB"]
+
+    # Buy Sell Indicator
+    for i, row in data.iterrows():
+        if i==0:
+            data["ST_BUY_SELL"]="NA"
+        elif (data.loc[i,"ST"]<data.loc[i,"close"]) :
+            data.loc[i,"ST_BUY_SELL"]= 1 #Buy
+        else:
+            data.loc[i,"ST_BUY_SELL"]= 2 #Sell
+    Value = 0
+    for i, row in data.iterrows():
+        Value = row['ST_BUY_SELL']
+
+    # return RSIValue ล่าสุด
+    return Value
 
 def Set_MapTrigger(NowPrice):
     ###### ----------Position   -----------###############
@@ -671,7 +758,7 @@ def Setup_beforeTrade():
     # ถ้า DDorLqd ใน google sheet = 2 คือ หลุดโซนล้างพอร์ต ระดับ 1
     if DDorLqd == 2:
         exposureType = levExposurePerBullet
-    # ถ้า DDorLqd ใน google sheet = 2 คือ หลุดโซนล้างพอร์ต ระดับ 2
+    # ถ้า DDorLqd ใน google sheet = 3 คือ หลุดโซนล้างพอร์ต ระดับ 2
     if DDorLqd == 3:
         exposureType = levExposurePerBullet*2
 
