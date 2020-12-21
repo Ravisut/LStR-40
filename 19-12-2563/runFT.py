@@ -21,6 +21,7 @@ if presskey == '2':
 
             ###### run ###################################
             callFuntionFutures.updatee()
+            checkError = 0
             ###############################################
 
             timeEnd = time.time()
@@ -62,7 +63,9 @@ if presskey == '2':
                  print('stop bot')
                  print(type(e).__name__, str(e))
                  callFuntionFutures.LineNotify(e, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
-                 break
+                 checkError = checkError+1
+                 if checkError == 2 :
+                     break
                  # sys.exit()
 
 
