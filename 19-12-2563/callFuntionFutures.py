@@ -27,8 +27,8 @@ whatsymbol = "XRP-PERP"
 ###########  ตั้งค่า API -------------------------------------------------------
 subaccount = 'bot-test-bug'  # ถ้ามี ซับแอคเคอร์ของ FTX
 exchange = ccxt.ftx({
-        'apiKey': '******',
-        'secret': '******',
+        'apiKey': '****',
+        'secret': '****',
         'enableRateLimit': True,
     })
 if subaccount == "":
@@ -114,6 +114,12 @@ def Trigger_trade(NowPrice):
                     dfMap.at[i, 'ExposureBuy'] = orderMatchedBUY['filled'] * orderMatchedBUY['price']
                     dfMap.at[i, 'feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side'])  # fee
 
+
+                    OpenTime = orderMatchedBUY['datetime']
+                    t = datetime.datetime.strptime(OpenTime, '%Y-%m-%dT%H:%M:%S.%fz')
+                    timestamp = datetime.datetime.timestamp(t)
+                    dfMap.at[i, 'OpenTime'] = timestamp
+
                     # แจ้งว่าเปิดออเดอร์ Buy
                     print('OpenOrder Price : ' + str(orderMatchedBUY['price']))
                     print('Amount : ' + str(orderMatchedBUY['filled']))
@@ -145,6 +151,11 @@ def Trigger_trade(NowPrice):
                             dfMap.at[i, 'FilledBuy'] = orderMatchedBUY['filled']
                             dfMap.at[i, 'ExposureBuy'] = orderMatchedBUY['filled'] * orderMatchedBUY['price']
                             dfMap.at[i, 'feeBuy'] = Getfee_ByIDoderinMyTrades(idOrderbuy, orderMatchedBUY['side'])  # fee
+
+                            OpenTime = orderMatchedBUY['datetime']
+                            t = datetime.datetime.strptime(OpenTime, '%Y-%m-%dT%H:%M:%S.%fz')
+                            timestamp = datetime.datetime.timestamp(t)
+                            dfMap.at[i, 'OpenTime'] = timestamp
 
                             # แจ้งว่า เปิดออเดอร์ Buy
                             print('OpenOrder Price : ' + str(orderMatchedBUY['price']))
@@ -209,7 +220,7 @@ def Trigger_trade(NowPrice):
                                                        , 'Amount': [str(row['AmountSell'])]
                                                        , 'TradeTrigger': [str(row['TradeTrigger'])]
                                                        , 'Zone': [str(row['Zone'])]
-                                                       , 'OpenTime': [str('00')]
+                                                       , 'OpenTime': [str(datetime.datetime.fromtimestamp(row['OpenTime']).isoformat())]
                                                        , 'CloseTime': [str(orderMatchedSELL['datetime'])]
                                                        , 'Profit': [str(profitshow)]
                                                        , 'feeBuy': [str(row['feeBuy'])]
@@ -776,6 +787,7 @@ def Setup_beforeTrade():
                                , 'ExposureBuy': np.nan
                                , 'NAV': np.nan
                                , 'TradeTrigger': np.nan
+                               , 'datetime': np.nan
                                , 'IDorderSell': np.nan
                                , 'ClosePrice': np.nan
                                , 'AmountSell': np.nan
