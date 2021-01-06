@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2021-01-06T12:56:17.861Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="Rh8r8U0kRYU9SetBTW-J" version="14.1.8" type="github">
+<mxfile host="app.diagrams.net" modified="2021-01-06T13:11:00.010Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="iKpc4lI_QCv1eFwM9gkA" version="14.1.8" type="github">
   <diagram id="AsI6TItvxqFHPiE_UcJp" name="Page-1">
     <mxGraphModel dx="1102" dy="614" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
       <root>
@@ -59,13 +59,28 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="HbJewlV4PkJ15DkKXm-D-17" value="Forloop เช็ค และเรียกใช้งานฟังก์ชั่นจาก broker" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;gradientColor=#ffffff;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="132.5" y="540" width="210" height="60" as="geometry" />
+          <mxGeometry x="110" y="540" width="227.5" height="60" as="geometry" />
         </mxCell>
         <mxCell id="HbJewlV4PkJ15DkKXm-D-18" value="Sector Object" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;gradientColor=#ffffff;" vertex="1" parent="1">
           <mxGeometry x="170" y="600" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="HbJewlV4PkJ15DkKXm-D-19" value="send api key,price,amont" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;fillColor=none;gradientColor=#ffffff;" vertex="1" parent="1">
           <mxGeometry x="160" y="490" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="HbJewlV4PkJ15DkKXm-D-21" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;gradientColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="85" y="750" width="290" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="HbJewlV4PkJ15DkKXm-D-22" value="Deck Object" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;gradientColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="165" y="820" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HbJewlV4PkJ15DkKXm-D-23" value="คำนวณทุนต่อโซน" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=none;gradientColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="165" y="760" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HbJewlV4PkJ15DkKXm-D-25" value="" style="endArrow=classic;startArrow=classic;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.466;exitY=0.007;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="HbJewlV4PkJ15DkKXm-D-21" target="HbJewlV4PkJ15DkKXm-D-10">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="220" y="770" as="sourcePoint" />
+            <mxPoint x="270" y="720" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
