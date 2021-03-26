@@ -25,7 +25,7 @@ di.sector.create_sectorObject_list()
 # Update while Loop
 timeBegin = 0
 checkError = 0
-sleeptime = 30  # ถ่วงเวลา 30-60  วินาที
+sleeptime = 300  # ถ่วงเวลา 5 นาที
 while True:
     try:
         timeBegin = time.time()

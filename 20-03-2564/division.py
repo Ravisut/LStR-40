@@ -534,7 +534,7 @@ class sector:
                             elif orderMatchedSELL['filled'] == 0 and pd.notna(row['CloseTime']):
                                 # ผ่านไป 60 นาที หรือยัง ถ้าจริง ให้ ยกเลิกออเดอร์
                                 start_time = row['CloseTime']
-                                target_time = start_time + 3600  # นับถอยหลัง 60 นาที เพื่อยกเลิกออเดอร์
+                                target_time = start_time + 86400  # นับถอยหลัง 24ชั่วโมง เพื่อยกเลิกออเดอร์ Sell
                                 now_time = time.time()
                                 timeElapsed = now_time - target_time
                                 #print(timeElapsed)
