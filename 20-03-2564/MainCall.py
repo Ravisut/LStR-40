@@ -25,7 +25,7 @@ di.sector.create_sectorObject_list()
 # Update while Loop
 timeBegin = 0
 checkError = 0
-sleeptime = 300  # ถ่วงเวลา 5 นาที
+sleeptime = 30  # ถ่วงเวลา 30 นาที
 while True:
     try:
         timeBegin = time.time()
@@ -78,8 +78,7 @@ while True:
             gs.sheet.Settingbot_df.loc['index_12', 'key_8'] = str(type(e).__name__)
             # -----------บันทึก Google sheet--------------
             # บันทึกชีทหน้า Settingbot
-            dfsSb = gs.sheet.Settingbot_df.drop(columns=[c for c in gs.sheet.Settingbot_df.columns if "Unnamed" in c]).dropna(how="all")  # ลบคอลัม์ที่ไม่ต้องการ และ row ที่ว่าง
-            set_with_dataframe(gs.sheet.gc.open(gs.sheet.sheetName).worksheet('Settingbot'), dfsSb.reset_index())
+            gs.sheet.getsave_to_sheet('Settingbot', 'Set')
             print(e)
             print(type(e).__name__,str(e) )
             print('-------ERROR--------------')

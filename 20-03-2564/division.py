@@ -85,6 +85,8 @@ class sector:
 
     runbot = None
     EditMode = None
+    stat_stopmode = True
+    time_to_re = 0
 
     exchangeObject = None
     index_name_scetor = ['A', 'B', 'C', 'D', 'E']
@@ -125,30 +127,40 @@ class sector:
         if gs.sheet.Settingbot_df.empty != True and sector.sectorObject != None:
 
             if sector.runbot == 'PlayMode':
+                if sector.time_to_re < time.time():
+                    sector.NowPrice = sector.exchangeObject.get_price()
+                    gs.sheet.Monitor_df.at['Main', 'NowPrice'] = sector.NowPrice
+                    #print('Price '+ sector.symbol+ ': '+ str(sector.NowPrice))
+                    # อัพเดท ความเคลื่อนไหวพอร์ต
+                    gs.sheet.flowlog()
 
-                sector.NowPrice = sector.exchangeObject.get_price()
-                gs.sheet.Monitor_df.at['Main', 'NowPrice'] = sector.NowPrice
-                #print('Price '+ sector.symbol+ ': '+ str(sector.NowPrice))
-                # อัพเดท ความเคลื่อนไหวพอร์ต
-                gs.sheet.flowlog()
+                    # สั่ง run ทุก sector ที่สร้างออบเข็ต และรุบะ index ไว้ # for i in rang len():
+                    # getting length of list
+                    length = len(sector.sectorObject)
 
-                # สั่ง run ทุก sector ที่สร้างออบเข็ต และรุบะ index ไว้ # for i in rang len():
-                # getting length of list
-                length = len(sector.sectorObject)
+                    for i in range(length):
+                        if sector.sectorObject[i].indexsector != 0:
+                            #print(sector.sectorObject[i].indexsector)
+                            sector.sectorObject[i].runSector()
 
-                for i in range(length):
-                    if sector.sectorObject[i].indexsector != 0:
-                        #print(sector.sectorObject[i].indexsector)
-                        sector.sectorObject[i].runSector()
+                    if sector.stat_stopmode == False:
+                        gs.sheet.Monitor_df.loc['Main', 'Play'] = 'Run Bot'
+                        sector.stat_stopmode = True
 
-                gs.sheet.getsave_to_sheet('Monitor', 'Set')
+                    gs.sheet.getsave_to_sheet('Monitor', 'Set')
+                    sector.time_to_re = time.time() + 300
 
-                ### ยกเลิกด้วยมือ ####################
-                gs.sheet.Command_frontEnd('Settingbot','cancel')
-                ### เปิดออเดอร์ด้วยมือ ##
-                gs.sheet.Command_frontEnd('Settingbot', 'Openorder')
 
             if sector.runbot == 'StopMode':
+                if sector.stat_stopmode:
+                    gs.sheet.Monitor_df.loc['Main', 'Play'] = 'Stop !! '
+                    gs.sheet.getsave_to_sheet('Monitor', 'Set')
+                    sector.stat_stopmode = False
+
+                ### ยกเลิกด้วยมือ ####################
+                gs.sheet.Command_frontEnd('Settingbot', 'cancel')
+                ### เปิดออเดอร์ด้วยมือ ##
+                gs.sheet.Command_frontEnd('Settingbot', 'Openorder')
                 gs.sheet.Command_frontEnd('Settingbot', 'SetupMap')
                 gs.sheet.Command_frontEnd('Settingbot', 'CreateMap')
                 gs.sheet.Command_frontEnd('Settingbot', 'Edited')
@@ -259,7 +271,7 @@ class sector:
                 self.Trigger_trade(value_fx)
 
                 if gs.sheet.Monitor_df.loc[self.indexsector]['BulletHold'] > 0:
-                    gs.sheet.Monitor_df.at[self.indexsector, 'Stack'] = 'Yes'
+                    gs.sheet.Monitor_df.at[self.indexsector, 'Stake'] = 'Yes'
 
                 # บันทึกลง csv
                 self.getsave_to_map('Set')
@@ -692,8 +704,12 @@ class sector:
                         '''
                         if checktradebuy == True:
                             # ต้นทุนกระสุนต่อนัด
-                            expousre = self.sector_info_dict["exposure"]
-                            # ปริมาณสินค้าที่จะตั้งออเดอร์ ต่อ กระสุน 1นัด
+                            expousre = 0
+                            if row['Exposure'] != None or row['Exposure'] != 0:
+                                 expousre = row['Exposure']
+                            else:
+                                expousre = self.sector_info_dict["exposure"]
+                            # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
                             amount = abs(expousre) / float(sector.NowPrice)
 
                             orderBuy = sector.exchangeObject.open_close('limit', 'buy', amount, sector.NowPrice)

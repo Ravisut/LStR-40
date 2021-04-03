@@ -121,7 +121,7 @@ class sheet:
 
                     sectorName = sheet.Settingbot_df.loc['index_20']['key_6']
 
-                    if sheet.Monitor_df.loc[sectorName]['Stack'] != 'Yes':
+                    if sheet.Monitor_df.loc[sectorName]['Stake'] != 'Yes':
 
                         Capital = sheet.Settingbot_df.loc['index_20']['key_1']
                         MaxZone = sheet.Settingbot_df.loc['index_20']['key_2']
@@ -148,6 +148,12 @@ class sheet:
 
                         sheet.getsave_to_sheet('Settingbot', 'Set')
                         sheet.getsave_to_sheet('Monitor', 'Set')
+                    else:
+                        sheet.Settingbot_df.loc['index_20', 'key_8'] = "Staking can't createmap!! "
+                        sheet.getsave_to_sheet('Settingbot', 'Set')
+
+
+
 
             if command == 'Edited':
                 if sheet.Settingbot_df.loc['index_12']['key_7'] == 'Done':
