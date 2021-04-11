@@ -3,6 +3,9 @@ import time
 import datetime
 import division as di
 import GoogleSheet as gs
+import traceback
+import sys
+
 from gspread_dataframe import set_with_dataframe
 
 """presskey = person = input('Press1 checklist or Press2 run Bot : ')
@@ -24,7 +27,7 @@ logger = logging.getLogger()
 di.sector.create_sectorObject_list()
 # Update while Loop
 timeBegin = 0
-checkError = 0
+#checkError = 0
 sleeptime = 30  # ถ่วงเวลา 30 นาที
 while True:
     try:
@@ -32,7 +35,7 @@ while True:
 
         ###### run ###################################
         di.sector.runDeck()
-        checkError = 0
+        #checkError = 0
         ###############################################
 
         timeEnd = time.time()
@@ -46,7 +49,7 @@ while True:
         #if sleeptime == 300:
         #    sleeptime = 30
 
-          # เครดิตพี่นัท LazyTrader
+    # เครดิตพี่นัท LazyTrader
     except ccxt.RequestTimeout as e:
         # recoverable error, do nothing and retry later
         print(type(e).__name__, str(e))
@@ -79,11 +82,16 @@ while True:
             # -----------บันทึก Google sheet--------------
             # บันทึกชีทหน้า Settingbot
             gs.sheet.getsave_to_sheet('Settingbot', 'Set')
+
+
             print(e)
             print(type(e).__name__,str(e) )
             print('-------ERROR--------------')
-            di.sector.LineNotify(type(e).__name__, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
-            checkError = checkError + 1
-            if checkError == 2:
-                break
+            error_class = e.__class__.__name__
+            detail = e.args[0]
+            tb = sys.exc_info()
+            line_number = traceback.extract_tb(tb)[-1][1]
+            info = '\n คลาส :' + str(error_class) +'\n' +'\n รายละเอียด :'+ str(detail) +'\n' +'\n บรรทัด :'+ str(line_number) +'\n' +'\n บรรทัด :'+ str(e) +'\n'
+
+            di.sector.LineNotify(info, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
             # sys.exit()'''

@@ -152,7 +152,7 @@ class sector:
 
 
             if sector.runbot == 'StopMode':
-                if sector.stat_stopmode:
+                if sector.stat_stopmode == True:
                     gs.sheet.Monitor_df.loc['Main', 'Play'] = 'Stop !! '
                     gs.sheet.getsave_to_sheet('Monitor', 'Set')
                     sector.stat_stopmode = False
