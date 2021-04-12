@@ -87,11 +87,10 @@ while True:
             print(e)
             print(type(e).__name__,str(e) )
             print('-------ERROR--------------')
-            error_class = e.__class__.__name__
-            detail = e.args[0]
-            tb = sys.exc_info()
-            line_number = traceback.extract_tb(tb)[-1][1]
-            info = '\n คลาส :' + str(error_class) +'\n' +'\n รายละเอียด :'+ str(detail) +'\n' +'\n บรรทัด :'+ str(line_number) +'\n' +'\n บรรทัด :'+ str(e) +'\n'
+            detail = traceback.print_exc()
+            print(detail)
+            print('++++++++++++++++++++++++')
+            info = '\n รายละเอียด :'+ str(detail) +'\n'
 
             di.sector.LineNotify(info, 'error')  # ถ้า error ที่แก้ไม่ได้ ไลน์ไป แจ้งคนเขียน
             # sys.exit()'''

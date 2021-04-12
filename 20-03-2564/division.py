@@ -705,12 +705,16 @@ class sector:
                         if checktradebuy == True:
                             # ต้นทุนกระสุนต่อนัด
                             expousre = 0
+                            amount = 0
                             if row['Exposure'] != None or row['Exposure'] != 0:
                                  expousre = row['Exposure']
+                                 # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
+                                 amount = abs(expousre) / float(sector.NowPrice)
                             else:
                                 expousre = self.sector_info_dict["exposure"]
-                            # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
-                            amount = abs(expousre) / float(sector.NowPrice)
+                                # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
+                                amount = abs(expousre) / float(sector.NowPrice)
+
 
                             orderBuy = sector.exchangeObject.open_close('limit', 'buy', amount, sector.NowPrice)
 
