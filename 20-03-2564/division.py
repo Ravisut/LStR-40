@@ -709,11 +709,12 @@ class sector:
                             if row['Exposure'] != None or row['Exposure'] != 0:
                                  expousre = row['Exposure']
                                  # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
-                                 amount = abs(expousre) / float(sector.NowPrice)
+                                 amount = float(abs(expousre)) / float(sector.NowPrice)
+                                 print(amount)
                             else:
                                 expousre = self.sector_info_dict["exposure"]
                                 # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
-                                amount = abs(expousre) / float(sector.NowPrice)
+                                amount = float(abs(expousre)) / float(sector.NowPrice)
 
 
                             orderBuy = sector.exchangeObject.open_close('limit', 'buy', amount, sector.NowPrice)

@@ -87,7 +87,8 @@ while True:
             print(e)
             print(type(e).__name__,str(e) )
             print('-------ERROR--------------')
-            detail = traceback.print_exc()
+            exc_info = sys.exc_info()
+            detail = traceback.print_exc(*exc_info)
             print(detail)
             print('++++++++++++++++++++++++')
             info = '\n รายละเอียด :'+ str(detail) +'\n'
