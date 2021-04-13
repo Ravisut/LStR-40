@@ -706,16 +706,15 @@ class sector:
                             # ต้นทุนกระสุนต่อนัด
                             expousre = 0
                             amount = 0
-                            if row['Exposure'] != None or row['Exposure'] != 0:
+                            if pd.notna(row['Exposure']):
                                  expousre = row['Exposure']
                                  # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
                                  amount = float(abs(expousre)) / float(sector.NowPrice)
-                                 print(amount)
+
                             else:
                                 expousre = self.sector_info_dict["exposure"]
                                 # ปริมาณสินค้าที่จะตั้งซื้อ ต่อ 1 ออเดอร์
                                 amount = float(abs(expousre)) / float(sector.NowPrice)
-
 
                             orderBuy = sector.exchangeObject.open_close('limit', 'buy', amount, sector.NowPrice)
 

@@ -37,7 +37,6 @@ while True:
         di.sector.runDeck()
         #checkError = 0
         ###############################################
-
         timeEnd = time.time()
         timeElapsed = timeEnd - timeBegin
         print('เวลา' + str(datetime.datetime.now().strftime('%H:%M')) + ' กระบวนการ 1 รอบใช้เวลา: ' + str(int(timeElapsed)) + ' วินาที')
@@ -87,8 +86,8 @@ while True:
             print(e)
             print(type(e).__name__,str(e) )
             print('-------ERROR--------------')
-            exc_info = sys.exc_info()
-            detail = traceback.print_exc(*exc_info)
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            detail = "\n".join(traceback.format_exception(sys.exc_info()[0],sys.exc_info()[1], sys.exc_info()[2]))
             print(detail)
             print('++++++++++++++++++++++++')
             info = '\n รายละเอียด :'+ str(detail) +'\n'
