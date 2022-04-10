@@ -24,10 +24,10 @@
 
 4/11/2563 เพิ่มตารางติดตามความเลื่อนไหวของพอร์ต
 
-ชีททดสอบ บอทตัวที่ 1
+ชีททดสอบ บอทตัวที่ 1 (ลบไฟล์ Google sheet ทิ้ง เนื่องไม่ได้ใช้งานอีกต่อไป ตอนนี้ไปใช้งาน ฐานข้อมูลจริงๆแทน)
 https://docs.google.com/spreadsheets/d/1gw0D_n9PSgoyXZYCN35xAykNTARL-WPqR0iKpFpkh00
 
-ชีททดสอบ บอทตัวที่ 2
+ชีททดสอบ บอทตัวที่ 2 (ตัวอย่างของเก่า)
 https://docs.google.com/spreadsheets/d/1QjcWwGd8ddlxtg8wiJ05ylY2iiieRULLCBj1_60r8y4/edit?usp=sharing
 
 วิธีเชื่อมต่อ API กับ Google sheet https://medium.com/@ravisutkanit
